@@ -1,0 +1,2 @@
+[plugins]
+schema-test = "source:target/wasm32-wasi/debug/schema_plugin.wasm"
