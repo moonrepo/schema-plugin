@@ -12,7 +12,7 @@ generate_global_shims_test!(
 async fn doesnt_create_global_shim() {
     let sandbox = create_empty_sandbox();
     let plugin = create_schema_plugin(
-        "schemas",
+        "schema-test",
         sandbox.path(),
         locate_fixture("schemas/shim-no-global.toml"),
     );
@@ -26,7 +26,7 @@ async fn doesnt_create_global_shim() {
 async fn can_create_local_shim() {
     let sandbox = create_empty_sandbox();
     let plugin = create_schema_plugin(
-        "schemas",
+        "schema-test",
         sandbox.path(),
         locate_fixture("schemas/shim-local.toml"),
     );

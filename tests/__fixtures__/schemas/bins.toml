@@ -3,11 +3,13 @@ name = "moon-test"
 type = "cli"
 
 [platform.linux]
+archive-prefix = "moon-linux"
 bin-path = "lin/moon"
-download-file = "moon-{arch}-unknown-linux-{libc}"
+download-file = "moon-{arch}-unknown-linux-gnu"
 
 [platform.macos]
 bin-path = "mac/moon"
+checksum-file = "SHASUM256.txt"
 download-file = "moon-{arch}-apple-darwin"
 
 [platform.windows]

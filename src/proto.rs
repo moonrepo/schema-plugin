@@ -61,14 +61,10 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
 }
 
 fn is_musl() -> bool {
-    if cfg!(macos) {
-        false
-    } else {
-        unsafe {
-            match exec_command(Json(ExecCommandInput::pipe("ldd", ["--version"]))) {
-                Ok(res) => res.0.stdout.contains("musl"),
-                Err(_) => false,
-            }
+    unsafe {
+        match exec_command(Json(ExecCommandInput::pipe("ldd", ["--version"]))) {
+            Ok(res) => res.0.stdout.contains("musl"),
+            Err(_) => false,
         }
     }
 }
@@ -84,7 +80,14 @@ fn interpolate_tokens(value: &str, schema: &Schema, env: &Environment) -> String
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {
-        value = value.replace("{libc}", if is_musl() { "musl" } else { "gnu" });
+        value = value.replace(
+            "{libc}",
+            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl() {
+                "musl"
+            } else {
+                "gnu"
+            },
+        );
     }
 
     value
