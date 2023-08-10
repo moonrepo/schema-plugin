@@ -1,0 +1,20 @@
+---
+source: tests/shims_test.rs
+expression: "std::fs::read_to_string(sandbox.path().join(\".proto/tools/schemas/latest/shims/schemas\")).unwrap()"
+---
+#!/usr/bin/env bash
+set -e
+[ -n "$PROTO_DEBUG" ] && set -x
+
+
+
+export PROTO_SCHEMAS_DIR="/var/folders/ml/41y5w4hx6fs1hqk57hd334y40000gn/T/.tmpTbEstt/.proto/tools/schemas/latest"
+
+
+
+
+
+
+exec "/var/folders/ml/41y5w4hx6fs1hqk57hd334y40000gn/T/.tmpTbEstt/.proto/tools/schemas/latest/schemas"  "$@" 
+
+
