@@ -10,9 +10,11 @@ Build the plugin:
 cargo build --target wasm32-wasi
 ```
 
-Test the plugin by running `proto` commands. Requires proto >= v0.12.
+Test the plugin by running `proto` commands. Requires proto >= v0.14.
 
 ```shell
-proto install schema-test
-proto list-remote schema-test
+proto install moon-test
+proto list-remote moon-test
 ```
+
+> Since this plugin requires an external schema file, its testing uses moon: https://moonrepo.dev/docs/install#proto
