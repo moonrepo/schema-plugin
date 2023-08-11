@@ -1,0 +1,20 @@
+---
+source: tests/shims_test.rs
+expression: "std::fs::read_to_string(sandbox.path().join(\".proto/tools/schema-test/latest/shims/schema-test\")).unwrap().replace(sandbox.path().to_str().unwrap(),\n    \"/workspace\")"
+---
+#!/usr/bin/env bash
+set -e
+[ -n "$PROTO_DEBUG" ] && set -x
+
+
+
+export PROTO_SCHEMA_TEST_DIR="/workspace/.proto/tools/schema-test/latest"
+
+
+
+
+
+
+exec "/workspace/.proto/tools/schema-test/latest/schema-test"  "$@" 
+
+

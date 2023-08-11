@@ -1,2 +1,2 @@
 [plugins]
-schema-test = "source:target/wasm32-wasi/debug/schema_plugin.wasm"
+moon-test = "source:https://raw.githubusercontent.com/moonrepo/moon/master/proto-plugin.toml"
