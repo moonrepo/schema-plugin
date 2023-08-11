@@ -38,5 +38,6 @@ async fn can_create_local_shim() {
             .path()
             .join(".proto/tools/schema-test/latest/shims/schema-test")
     )
-    .unwrap());
+    .unwrap()
+    .replace(sandbox.path().to_str().unwrap(), "/workspace"));
 }

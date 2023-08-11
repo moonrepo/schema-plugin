@@ -1,6 +1,6 @@
 ---
 source: tests/shims_test.rs
-expression: "std::fs::read_to_string(sandbox.path().join(\".proto/tools/schema-test/latest/shims/schema-test\")).unwrap()"
+expression: "std::fs::read_to_string(sandbox.path().join(\".proto/tools/schema-test/latest/shims/schema-test\")).unwrap().replace(sandbox.path().to_str().unwrap(),\n    \"/workspace\")"
 ---
 #!/usr/bin/env bash
 set -e
@@ -8,13 +8,13 @@ set -e
 
 
 
-export PROTO_SCHEMA_TEST_DIR="/var/folders/ml/41y5w4hx6fs1hqk57hd334y40000gn/T/.tmp8LI7Z7/.proto/tools/schema-test/latest"
+export PROTO_SCHEMA_TEST_DIR="/workspace/.proto/tools/schema-test/latest"
 
 
 
 
 
 
-exec "/var/folders/ml/41y5w4hx6fs1hqk57hd334y40000gn/T/.tmp8LI7Z7/.proto/tools/schema-test/latest/schema-test"  "$@" 
+exec "/workspace/.proto/tools/schema-test/latest/schema-test"  "$@" 
 
 
