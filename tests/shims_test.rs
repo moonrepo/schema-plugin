@@ -33,15 +33,10 @@ async fn can_create_local_shim() {
 
     plugin.tool.create_shims(false).await.unwrap();
 
-    assert!(sandbox
-        .path()
-        .join(".proto/tools/schemas/latest/shims/schemas")
-        .exists());
-
     assert_snapshot!(std::fs::read_to_string(
         sandbox
             .path()
-            .join(".proto/tools/schemas/latest/shims/schemas")
+            .join(".proto/tools/schema-test/latest/shims/schema-test")
     )
     .unwrap());
 }
