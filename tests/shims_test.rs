@@ -22,6 +22,7 @@ async fn doesnt_create_global_shim() {
     assert!(!sandbox.path().join(".proto/bin/schema-test").exists());
 }
 
+#[cfg(not(windows))]
 #[tokio::test]
 async fn can_create_local_shim() {
     let sandbox = create_empty_sandbox();
