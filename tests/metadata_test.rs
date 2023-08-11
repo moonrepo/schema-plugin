@@ -19,3 +19,4 @@ fn registers_metadata() {
         }
     );
 }
+

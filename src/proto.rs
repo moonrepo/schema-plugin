@@ -113,7 +113,7 @@ pub fn download_prebuilt(
         &input.env,
     );
     let checksum_url = schema.install.checksum_url.as_ref().map(|url| {
-        interpolate_tokens(&url, &schema, &input.env).replace("{checksum_file}", &checksum_file)
+        interpolate_tokens(url, &schema, &input.env).replace("{checksum_file}", &checksum_file)
     });
 
     Ok(Json(DownloadPrebuiltOutput {
@@ -135,7 +135,6 @@ pub fn locate_bins(Json(input): Json<LocateBinsInput>) -> FnResult<Json<LocateBi
         fallback_last_globals_dir: true,
         globals_lookup_dirs: schema.globals.lookup_dirs,
         globals_prefix: schema.globals.package_prefix,
-        ..LocateBinsOutput::default()
     }))
 }
 
@@ -154,7 +153,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     if let Some(repository) = schema.resolve.git_url {
         let pattern = regex::Regex::new(&schema.resolve.git_tag_pattern)?;
 
-        let tags = load_git_tags(&repository)?
+        let tags = load_git_tags(repository)?
             .into_iter()
             .filter_map(|t| {
                 pattern
@@ -178,7 +177,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
                 }
                 JsonValue::Object(o) => {
                     if let Some(JsonValue::String(v)) = o.get(version_key) {
-                        versions.push(remove_v_prefix(&v).to_string());
+                        versions.push(remove_v_prefix(v).to_string());
                     }
                 }
                 _ => {}
