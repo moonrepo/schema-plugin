@@ -19,15 +19,13 @@ fn get_schema() -> Result<Schema, Error> {
 
 fn get_platform<'schema>(
     schema: &'schema Schema,
-    env: &Environment,
+    env: &HostEnvironment,
 ) -> Result<&'schema PlatformMapper, PluginError> {
     let os = env.os.to_string();
     let mut platform = schema.platform.get(&os);
 
     // Fallback to linux for other OSes
-    if platform.is_none()
-        && (env.os == HostOS::FreeBSD || env.os == HostOS::NetBSD || env.os == HostOS::OpenBSD)
-    {
+    if platform.is_none() && env.os.is_bsd() {
         platform = schema.platform.get("linux");
     }
 
@@ -37,11 +35,11 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(platform: &PlatformMapper, env: &Environment) -> PathBuf {
+fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> PathBuf {
     platform
         .bin_path
         .clone()
-        .unwrap_or_else(|| format_bin_name(&env.id, env.os))
+        .unwrap_or_else(|| format_bin_name(&get_tool_id(), env.os))
         .into()
 }
 
@@ -56,6 +54,7 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
             SchemaType::DependencyManager => PluginType::DependencyManager,
             SchemaType::Language => PluginType::Language,
         },
+        plugin_version: Some(env!("CARGO_PKG_VERSION").into()),
         ..ToolMetadataOutput::default()
     }))
 }
@@ -69,12 +68,17 @@ fn is_musl() -> bool {
     }
 }
 
-fn interpolate_tokens(value: &str, schema: &Schema, env: &Environment) -> String {
+fn interpolate_tokens(
+    value: &str,
+    version: &str,
+    schema: &Schema,
+    env: &HostEnvironment,
+) -> String {
     let arch = env.arch.to_rust_arch();
     let os = env.os.to_string();
 
     let mut value = value
-        .replace("{version}", &env.version)
+        .replace("{version}", version)
         .replace("{arch}", schema.install.arch.get(&arch).unwrap_or(&arch))
         .replace("{os}", &os);
 
@@ -97,23 +101,38 @@ fn interpolate_tokens(value: &str, schema: &Schema, env: &Environment) -> String
 pub fn download_prebuilt(
     Json(input): Json<DownloadPrebuiltInput>,
 ) -> FnResult<Json<DownloadPrebuiltOutput>> {
+    let env = get_proto_environment()?;
     let schema = get_schema()?;
-    let platform = get_platform(&schema, &input.env)?;
+    let platform = get_platform(&schema, &env)?;
 
-    let download_file = interpolate_tokens(&platform.download_file, &schema, &input.env);
-    let download_url = interpolate_tokens(&schema.install.download_url, &schema, &input.env)
-        .replace("{download_file}", &download_file);
+    let download_file = interpolate_tokens(
+        &platform.download_file,
+        &input.context.version,
+        &schema,
+        &env,
+    );
+
+    let download_url = interpolate_tokens(
+        &schema.install.download_url,
+        &input.context.version,
+        &schema,
+        &env,
+    )
+    .replace("{download_file}", &download_file);
 
     let checksum_file = interpolate_tokens(
         platform
             .checksum_file
             .as_ref()
             .unwrap_or(&"CHECKSUM.txt".to_string()),
+        &input.context.version,
         &schema,
-        &input.env,
+        &env,
     );
+
     let checksum_url = schema.install.checksum_url.as_ref().map(|url| {
-        interpolate_tokens(url, &schema, &input.env).replace("{checksum_file}", &checksum_file)
+        interpolate_tokens(url, &input.context.version, &schema, &env)
+            .replace("{checksum_file}", &checksum_file)
     });
 
     Ok(Json(DownloadPrebuiltOutput {
@@ -126,12 +145,13 @@ pub fn download_prebuilt(
 }
 
 #[plugin_fn]
-pub fn locate_bins(Json(input): Json<LocateBinsInput>) -> FnResult<Json<LocateBinsOutput>> {
+pub fn locate_bins(Json(_): Json<LocateBinsInput>) -> FnResult<Json<LocateBinsOutput>> {
+    let env = get_proto_environment()?;
     let schema = get_schema()?;
-    let platform = get_platform(&schema, &input.env)?;
+    let platform = get_platform(&schema, &env)?;
 
     Ok(Json(LocateBinsOutput {
-        bin_path: Some(get_bin_path(platform, &input.env)),
+        bin_path: Some(get_bin_path(platform, &env)),
         fallback_last_globals_dir: true,
         globals_lookup_dirs: schema.globals.lookup_dirs,
         globals_prefix: schema.globals.package_prefix,
@@ -162,7 +182,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
             })
             .collect::<Vec<_>>();
 
-        return Ok(Json(LoadVersionsOutput::from_tags(&tags)?));
+        return Ok(Json(LoadVersionsOutput::from(tags)?));
     }
 
     if let Some(endpoint) = schema.resolve.manifest_url {
@@ -184,7 +204,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
             }
         }
 
-        return Ok(Json(LoadVersionsOutput::from_tags(&versions)?));
+        return Ok(Json(LoadVersionsOutput::from(versions)?));
     }
 
     err!(
@@ -206,17 +226,20 @@ pub fn detect_version_files(_: ()) -> FnResult<Json<DetectVersionOutput>> {
 }
 
 #[plugin_fn]
-pub fn create_shims(Json(input): Json<CreateShimsInput>) -> FnResult<Json<CreateShimsOutput>> {
-    let mut output = CreateShimsOutput::default();
+pub fn create_shims(Json(_): Json<CreateShimsInput>) -> FnResult<Json<CreateShimsOutput>> {
+    let env = get_proto_environment()?;
     let schema = get_schema()?;
-    let platform = get_platform(&schema, &input.env)?;
-    let bin_path = get_bin_path(platform, &input.env);
+    let platform = get_platform(&schema, &env)?;
+    let bin_path = get_bin_path(platform, &env);
 
-    output.no_primary_global = !schema.shim.global;
+    let mut output = CreateShimsOutput {
+        no_primary_global: !schema.shim.global,
+        ..CreateShimsOutput::default()
+    };
 
     if schema.shim.local {
         output.local_shims.insert(
-            input.env.id,
+            get_tool_id(),
             if let Some(parent_bin) = schema.shim.parent_bin {
                 ShimConfig::local_with_parent(bin_path, parent_bin)
             } else {
