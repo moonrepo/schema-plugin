@@ -2,7 +2,6 @@ use extism_pdk::*;
 use proto_pdk::*;
 use proto_schema_plugin::{PlatformMapper, Schema, SchemaType};
 use serde_json::Value as JsonValue;
-use starbase_utils::toml;
 use std::path::PathBuf;
 
 #[host_fn]
@@ -249,4 +248,44 @@ pub fn create_shims(Json(_): Json<CreateShimsInput>) -> FnResult<Json<CreateShim
     }
 
     Ok(Json(output))
+}
+
+#[plugin_fn]
+pub fn install_global(
+    Json(input): Json<InstallGlobalInput>,
+) -> FnResult<Json<InstallGlobalOutput>> {
+    let schema = get_schema()?;
+
+    if let Some(install_args) = schema.globals.install_args {
+        let args = install_args
+            .into_iter()
+            .map(|arg| arg.replace("{dependency}", &input.dependency))
+            .collect::<Vec<_>>();
+
+        let result = exec_command!(inherit, get_tool_id(), args);
+
+        return Ok(Json(InstallGlobalOutput::from_exec_command(result)));
+    }
+
+    Ok(Json(InstallGlobalOutput::default()))
+}
+
+#[plugin_fn]
+pub fn uninstall_global(
+    Json(input): Json<UninstallGlobalInput>,
+) -> FnResult<Json<UninstallGlobalOutput>> {
+    let schema = get_schema()?;
+
+    if let Some(uninstall_args) = schema.globals.uninstall_args {
+        let args = uninstall_args
+            .into_iter()
+            .map(|arg| arg.replace("{dependency}", &input.dependency))
+            .collect::<Vec<_>>();
+
+        let result = exec_command!(inherit, get_tool_id(), args);
+
+        return Ok(Json(UninstallGlobalOutput::from_exec_command(result)));
+    }
+
+    Ok(Json(UninstallGlobalOutput::default()))
 }
