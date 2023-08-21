@@ -15,6 +15,7 @@ fn registers_metadata() {
         ToolMetadataOutput {
             name: "moon-test".into(),
             type_of: PluginType::CLI,
+            plugin_version: Some(env!("CARGO_PKG_VERSION").into()),
             ..ToolMetadataOutput::default()
         }
     );
