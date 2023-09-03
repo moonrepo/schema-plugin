@@ -7,7 +7,7 @@ generate_resolve_versions_tests!(
         "1.0" => "1.0.3",
         "1.4" => "1.4.0",
         "1.5" => "1.5.1",
-        "1" => "1.12.0",
+        "1" => "1.12.1",
     },
     Some(locate_fixture("schemas").join("base.toml"))
 );
