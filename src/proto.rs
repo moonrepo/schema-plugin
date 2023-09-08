@@ -94,35 +94,46 @@ pub fn download_prebuilt(
     let env = get_proto_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
+    let version = input.context.version;
+    let is_canary = version == "canary";
 
-    let download_file = interpolate_tokens(
-        &platform.download_file,
-        &input.context.version,
-        &schema,
-        &env,
-    );
+    let download_file = interpolate_tokens(&platform.download_file, &version, &schema, &env);
 
     let download_url = interpolate_tokens(
-        &schema.install.download_url,
-        &input.context.version,
+        if is_canary {
+            schema
+                .install
+                .download_url_canary
+                .as_ref()
+                .unwrap_or(&schema.install.download_url)
+        } else {
+            &schema.install.download_url
+        },
+        &version,
         &schema,
         &env,
     )
     .replace("{download_file}", &download_file);
 
     let checksum_file = interpolate_tokens(
-        platform
-            .checksum_file
-            .as_ref()
-            .unwrap_or(&"CHECKSUM.txt".to_string()),
-        &input.context.version,
+        platform.checksum_file.as_deref().unwrap_or("CHECKSUM.txt"),
+        &version,
         &schema,
         &env,
     );
 
-    let checksum_url = schema.install.checksum_url.as_ref().map(|url| {
-        interpolate_tokens(url, &input.context.version, &schema, &env)
-            .replace("{checksum_file}", &checksum_file)
+    let checksum_url = if is_canary {
+        schema
+            .install
+            .checksum_url_canary
+            .as_ref()
+            .or(schema.install.checksum_url.as_ref())
+    } else {
+        schema.install.checksum_url.as_ref()
+    };
+
+    let checksum_url = checksum_url.map(|url| {
+        interpolate_tokens(url, &version, &schema, &env).replace("{checksum_file}", &checksum_file)
     });
 
     Ok(Json(DownloadPrebuiltOutput {

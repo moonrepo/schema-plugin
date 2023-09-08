@@ -4,7 +4,7 @@
 
 #### 🚀 Updates
 
-- Added support for installing canary releases.
+- Added support for installing canary releases with the `install.checksum_url_canary` and `install.download_url_canary` settings.
 - Updated to support proto v0.17 release.
 
 ## 0.1.1
