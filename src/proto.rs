@@ -58,15 +58,6 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
     }))
 }
 
-fn is_musl() -> bool {
-    unsafe {
-        match exec_command(Json(ExecCommandInput::pipe("ldd", ["--version"]))) {
-            Ok(res) => res.0.stdout.contains("musl"),
-            Err(_) => false,
-        }
-    }
-}
-
 fn interpolate_tokens(
     value: &str,
     version: &str,
@@ -85,7 +76,7 @@ fn interpolate_tokens(
     if value.contains("{libc}") {
         value = value.replace(
             "{libc}",
-            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl() {
+            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl(env) {
                 "musl"
             } else {
                 "gnu"
@@ -206,10 +197,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
         return Ok(Json(LoadVersionsOutput::from(versions)?));
     }
 
-    err!(
-        "Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`."
-            .into()
-    )
+    err!("Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`.")
 }
 
 #[plugin_fn]

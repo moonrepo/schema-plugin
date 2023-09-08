@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+#### 🚀 Updates
+
+- Added support for installing canary releases.
+- Updated to support proto v0.17 release.
+
 ## 0.1.1
 
 #### 🚀 Updates
