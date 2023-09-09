@@ -12,6 +12,8 @@ export PROTO_SCHEMA_TEST_DIR="/workspace/.proto/tools/schema-test/latest"
 
 
 
+export PROTO_SCHEMA_TEST_VERSION="latest"
+
 
 
 

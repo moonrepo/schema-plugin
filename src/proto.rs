@@ -58,15 +58,6 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
     }))
 }
 
-fn is_musl() -> bool {
-    unsafe {
-        match exec_command(Json(ExecCommandInput::pipe("ldd", ["--version"]))) {
-            Ok(res) => res.0.stdout.contains("musl"),
-            Err(_) => false,
-        }
-    }
-}
-
 fn interpolate_tokens(
     value: &str,
     version: &str,
@@ -85,7 +76,7 @@ fn interpolate_tokens(
     if value.contains("{libc}") {
         value = value.replace(
             "{libc}",
-            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl() {
+            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl(env) {
                 "musl"
             } else {
                 "gnu"
@@ -103,35 +94,46 @@ pub fn download_prebuilt(
     let env = get_proto_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
+    let version = input.context.version;
+    let is_canary = version == "canary";
 
-    let download_file = interpolate_tokens(
-        &platform.download_file,
-        &input.context.version,
-        &schema,
-        &env,
-    );
+    let download_file = interpolate_tokens(&platform.download_file, &version, &schema, &env);
 
     let download_url = interpolate_tokens(
-        &schema.install.download_url,
-        &input.context.version,
+        if is_canary {
+            schema
+                .install
+                .download_url_canary
+                .as_ref()
+                .unwrap_or(&schema.install.download_url)
+        } else {
+            &schema.install.download_url
+        },
+        &version,
         &schema,
         &env,
     )
     .replace("{download_file}", &download_file);
 
     let checksum_file = interpolate_tokens(
-        platform
-            .checksum_file
-            .as_ref()
-            .unwrap_or(&"CHECKSUM.txt".to_string()),
-        &input.context.version,
+        platform.checksum_file.as_deref().unwrap_or("CHECKSUM.txt"),
+        &version,
         &schema,
         &env,
     );
 
-    let checksum_url = schema.install.checksum_url.as_ref().map(|url| {
-        interpolate_tokens(url, &input.context.version, &schema, &env)
-            .replace("{checksum_file}", &checksum_file)
+    let checksum_url = if is_canary {
+        schema
+            .install
+            .checksum_url_canary
+            .as_ref()
+            .or(schema.install.checksum_url.as_ref())
+    } else {
+        schema.install.checksum_url.as_ref()
+    };
+
+    let checksum_url = checksum_url.map(|url| {
+        interpolate_tokens(url, &version, &schema, &env).replace("{checksum_file}", &checksum_file)
     });
 
     Ok(Json(DownloadPrebuiltOutput {
@@ -206,10 +208,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
         return Ok(Json(LoadVersionsOutput::from(versions)?));
     }
 
-    err!(
-        "Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`."
-            .into()
-    )
+    err!("Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`.")
 }
 
 #[plugin_fn]
