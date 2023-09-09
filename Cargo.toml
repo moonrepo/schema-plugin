@@ -10,7 +10,7 @@ crate-type = ['cdylib']
 
 [dependencies]
 extism-pdk = "0.3.4"
-proto_pdk = { version = "0.7.0" }            # , path = "../../proto/crates/pdk" }
+proto_pdk = { version = "0.7.1" }            # , path = "../../proto/crates/pdk" }
 proto_schema_plugin = { version = "0.11.4" } # , path = "../../proto/crates/schema-plugin" }
 regex = "1.9.5"
 serde = "1.0.188"
@@ -18,7 +18,7 @@ serde_json = "1.0.105"
 toml = "0.7.7"
 
 [dev-dependencies]
-proto_pdk_test_utils = { version = "0.6.1" } # , path = "../../proto/crates/pdk-test-utils" }
+proto_pdk_test_utils = { version = "0.6.2" } # , path = "../../proto/crates/pdk-test-utils" }
 starbase_sandbox = "0.1.10"
 tokio = "1.32.0"
 
