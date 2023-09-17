@@ -1,17 +1,18 @@
+use crate::schema::{PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
-use proto_schema_plugin::{PlatformMapper, Schema, SchemaType};
 use serde_json::Value as JsonValue;
 use std::path::PathBuf;
 
 #[host_fn]
 extern "ExtismHost" {
+    fn host_log(input: Json<HostLogInput>);
     fn exec_command(input: Json<ExecCommandInput>) -> Json<ExecCommandOutput>;
 }
 
 fn get_schema() -> Result<Schema, Error> {
     let data = config::get("schema").expect("Missing schema!");
-    let schema: Schema = toml::from_str(&data)?;
+    let schema: Schema = json::from_str(&data)?;
 
     Ok(schema)
 }
@@ -174,12 +175,13 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     if let Some(repository) = schema.resolve.git_url {
         let pattern = regex::Regex::new(&schema.resolve.git_tag_pattern)?;
 
-        let tags = load_git_tags(repository)?
+        let tags = load_git_tags(repository)?;
+        let tags = tags
             .into_iter()
             .filter_map(|t| {
                 pattern
                     .captures(&t)
-                    .map(|captures| remove_v_prefix(captures.get(1).unwrap().as_str()).to_string())
+                    .map(|captures| captures.get(1).unwrap().as_str().to_string())
             })
             .collect::<Vec<_>>();
 
