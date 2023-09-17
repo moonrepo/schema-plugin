@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+#### 🚀 Breaking
+
+- We updated the schema internally to be represented as JSON instead of TOML, which may cause breakages depending on a version mismatch between proto and the plugin.
+
+#### 🐞 Fixes
+
+- Fixed version parsing from tags to be more accurate. Will now properly include prerelease/build metadata.
+
 ## 0.2.0
 
 #### 🚀 Updates
