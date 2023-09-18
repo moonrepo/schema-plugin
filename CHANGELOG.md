@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+#### 🐞 Fixes
+
+- Fixed an invalid regex pattern.
+
 ## 0.3.0
 
 #### 🚀 Breaking
