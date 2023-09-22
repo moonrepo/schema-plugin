@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+#### ⚙️ Internal
+
+- Updated dependencies.
+
 ## 0.3.1
 
 #### 🐞 Fixes
