@@ -137,8 +137,13 @@ pub fn download_prebuilt(
         interpolate_tokens(url, &version, &schema, &env).replace("{checksum_file}", &checksum_file)
     });
 
+    let archive_prefix = platform
+        .archive_prefix
+        .as_ref()
+        .map(|prefix| interpolate_tokens(&prefix, &version, &schema, &env));
+
     Ok(Json(DownloadPrebuiltOutput {
-        archive_prefix: platform.archive_prefix.clone(),
+        archive_prefix,
         checksum_url,
         checksum_name: Some(checksum_file),
         download_url,

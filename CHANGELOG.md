@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.3
+
+#### 🐞 Fixes
+
+- Fixed `archive-prefix` not being interpolated.
+
+#### ⚙️ Internal
+
+- Updated dependencies.
+
 ## 0.3.2
 
 #### ⚙️ Internal
