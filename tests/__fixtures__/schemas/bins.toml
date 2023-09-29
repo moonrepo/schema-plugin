@@ -3,7 +3,7 @@ name = "moon-test"
 type = "cli"
 
 [platform.linux]
-archive-prefix = "moon-linux"
+archive-prefix = "moon-linux-{arch}-{version}"
 bin-path = "lin/moon"
 download-file = "moon-{arch}-unknown-linux-gnu"
 

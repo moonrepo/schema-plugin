@@ -30,7 +30,7 @@ fn supports_linux_arm64() {
             }
         }),
         DownloadPrebuiltOutput {
-            archive_prefix: Some("moon-linux".into()),
+            archive_prefix: Some("moon-linux-aarch64-20.0.0".into()),
             checksum_name: Some("CHECKSUM.txt".into()),
             checksum_url: None,
             download_name: Some("moon-aarch64-unknown-linux-gnu".into()),
@@ -62,7 +62,7 @@ fn supports_linux_x64() {
             }
         }),
         DownloadPrebuiltOutput {
-            archive_prefix: Some("moon-linux".into()),
+            archive_prefix: Some("moon-linux-x86_64-20.0.0".into()),
             checksum_name: Some("CHECKSUM.txt".into()),
             checksum_url: None,
             download_name: Some("moon-x86_64-unknown-linux-gnu".into()),

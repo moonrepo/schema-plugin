@@ -2070,9 +2070,9 @@ dependencies = [
 
 [[package]]
 name = "proto_pdk"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bbfbaa6ce5358bdaa3f825f55efb7eb11813c690cf6d524149018404934f248"
+checksum = "a4025c02143543aa93fb92da942b43f3b3aa1230ad17b7976225640e763b0dfe"
 dependencies = [
  "anyhow",
  "extism-pdk",
@@ -2482,7 +2482,7 @@ dependencies = [
 
 [[package]]
 name = "schema_plugin"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "extism-pdk",
  "proto_pdk",
