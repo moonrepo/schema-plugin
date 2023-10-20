@@ -55,6 +55,7 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
             SchemaType::Language => PluginType::Language,
         },
         plugin_version: Some(env!("CARGO_PKG_VERSION").into()),
+        self_upgrade_commands: schema.metadata.self_upgrade_commands,
         ..ToolMetadataOutput::default()
     }))
 }

@@ -5,6 +5,7 @@
 #### 🚀 Updates
 
 - Added `install.checksum_public_key` for defining the public key used to verify checksums.
+- Added `metadata.self_upgrade_commands` for defining which sub-commands should be blocked for self-upgrades.
 - Updated to support proto v0.20 release.
 
 #### ⚙️ Internal
