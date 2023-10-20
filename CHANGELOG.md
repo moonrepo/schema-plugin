@@ -4,6 +4,7 @@
 
 #### 🚀 Updates
 
+- Added `install.checksum_public_key` for defining the public key used to verify checksums.
 - Updated to support proto v0.20 release.
 
 #### ⚙️ Internal

@@ -20,6 +20,7 @@ pub struct DetectSchema {
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
     pub arch: HashMap<String, String>,
+    pub checksum_public_key: Option<String>,
     pub checksum_url: Option<String>,
     pub checksum_url_canary: Option<String>,
     pub download_url: String,

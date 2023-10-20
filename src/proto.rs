@@ -146,7 +146,7 @@ pub fn download_prebuilt(
         archive_prefix,
         checksum_url,
         checksum_name: Some(checksum_file),
-        checksum_public_key: None,
+        checksum_public_key: schema.install.checksum_public_key,
         download_url,
         download_name: Some(download_file),
     }))
