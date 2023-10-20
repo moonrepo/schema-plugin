@@ -39,7 +39,7 @@ fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> PathBuf {
     platform
         .bin_path
         .clone()
-        .unwrap_or_else(|| format_bin_name(&get_tool_id(), env.os))
+        .unwrap_or_else(|| format_bin_name(get_tool_id(), env.os))
         .into()
 }
 
@@ -140,12 +140,13 @@ pub fn download_prebuilt(
     let archive_prefix = platform
         .archive_prefix
         .as_ref()
-        .map(|prefix| interpolate_tokens(&prefix, &version, &schema, &env));
+        .map(|prefix| interpolate_tokens(prefix, &version, &schema, &env));
 
     Ok(Json(DownloadPrebuiltOutput {
         archive_prefix,
         checksum_url,
         checksum_name: Some(checksum_file),
+        checksum_public_key: None,
         download_url,
         download_name: Some(download_file),
     }))
