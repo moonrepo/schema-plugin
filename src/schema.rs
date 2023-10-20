@@ -20,6 +20,7 @@ pub struct DetectSchema {
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
     pub arch: HashMap<String, String>,
+    pub checksum_public_key: Option<String>,
     pub checksum_url: Option<String>,
     pub checksum_url_canary: Option<String>,
     pub download_url: String,
@@ -77,10 +78,17 @@ impl Default for ShimSchema {
 }
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(default, rename_all = "kebab-case")]
+pub struct MetadataSchema {
+    pub self_upgrade_commands: Vec<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SchemaType {
     #[default]
     Language,
+    #[serde(alias = "package-manager")]
     DependencyManager,
     Cli,
 }
@@ -91,6 +99,7 @@ pub struct Schema {
     pub name: String,
     #[serde(rename = "type")]
     pub type_of: SchemaType,
+    pub metadata: MetadataSchema,
     pub platform: HashMap<String, PlatformMapper>,
 
     pub detect: DetectSchema,

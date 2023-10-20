@@ -39,7 +39,7 @@ fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> PathBuf {
     platform
         .bin_path
         .clone()
-        .unwrap_or_else(|| format_bin_name(&get_tool_id(), env.os))
+        .unwrap_or_else(|| format_bin_name(get_tool_id(), env.os))
         .into()
 }
 
@@ -55,6 +55,7 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
             SchemaType::Language => PluginType::Language,
         },
         plugin_version: Some(env!("CARGO_PKG_VERSION").into()),
+        self_upgrade_commands: schema.metadata.self_upgrade_commands,
         ..ToolMetadataOutput::default()
     }))
 }
@@ -140,12 +141,13 @@ pub fn download_prebuilt(
     let archive_prefix = platform
         .archive_prefix
         .as_ref()
-        .map(|prefix| interpolate_tokens(&prefix, &version, &schema, &env));
+        .map(|prefix| interpolate_tokens(prefix, &version, &schema, &env));
 
     Ok(Json(DownloadPrebuiltOutput {
         archive_prefix,
         checksum_url,
         checksum_name: Some(checksum_file),
+        checksum_public_key: schema.install.checksum_public_key,
         download_url,
         download_name: Some(download_file),
     }))
