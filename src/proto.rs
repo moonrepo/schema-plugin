@@ -196,7 +196,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     }
 
     if let Some(endpoint) = schema.resolve.manifest_url {
-        let response: Vec<JsonValue> = fetch_url_with_cache(endpoint)?;
+        let response: Vec<JsonValue> = fetch_url(endpoint)?;
         let version_key = &schema.resolve.manifest_version_key;
         let mut versions = vec![];
 
