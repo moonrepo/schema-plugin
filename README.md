@@ -1,6 +1,6 @@
-# Schema plugin
+# Schema-based plugin
 
-WASM plugin for [proto](https://github.com/moonrepo/proto) that is powered by a schema. Currently supports TOML.
+A WASM plugin that powers [proto](https://github.com/moonrepo/proto)'s [TOML plugin](https://moonrepo.dev/docs/proto/toml-plugin) pattern. This plugin is responsible for parsing the TOML schema file and providing the necessary information to proto by implementing the applicable WASM functions.
 
 ## Contributing
 
