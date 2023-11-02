@@ -96,7 +96,7 @@ pub fn download_prebuilt(
     let env = get_proto_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
-    let version = input.context.version;
+    let version = input.context.version.to_string();
     let is_canary = version == "canary";
 
     let download_file = interpolate_tokens(&platform.download_file, &version, &schema, &env);
