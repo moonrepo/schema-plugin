@@ -2,7 +2,6 @@ use crate::schema::{PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
 use serde_json::Value as JsonValue;
-use std::path::PathBuf;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -35,12 +34,11 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> PathBuf {
+fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> String {
     platform
         .bin_path
         .clone()
         .unwrap_or_else(|| format_bin_name(get_tool_id(), env.os))
-        .into()
 }
 
 #[plugin_fn]
@@ -58,6 +56,71 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
         self_upgrade_commands: schema.metadata.self_upgrade_commands,
         ..ToolMetadataOutput::default()
     }))
+}
+
+pub fn remove_v_prefix(value: &str) -> &str {
+    if value.starts_with('v') || value.starts_with('V') {
+        return &value[1..];
+    }
+
+    value
+}
+
+#[plugin_fn]
+pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVersionsOutput>> {
+    let schema = get_schema()?;
+
+    if let Some(repository) = schema.resolve.git_url {
+        let pattern = regex::Regex::new(&schema.resolve.git_tag_pattern)?;
+
+        let tags = load_git_tags(repository)?;
+        let tags = tags
+            .into_iter()
+            .filter_map(|t| {
+                pattern
+                    .captures(&t)
+                    .map(|captures| captures.get(1).unwrap().as_str().to_string())
+            })
+            .collect::<Vec<_>>();
+
+        return Ok(Json(LoadVersionsOutput::from(tags)?));
+    }
+
+    if let Some(endpoint) = schema.resolve.manifest_url {
+        let response: Vec<JsonValue> = fetch_url(endpoint)?;
+        let version_key = &schema.resolve.manifest_version_key;
+        let mut versions = vec![];
+
+        for row in response {
+            match row {
+                JsonValue::String(v) => {
+                    versions.push(remove_v_prefix(&v).to_string());
+                }
+                JsonValue::Object(o) => {
+                    if let Some(JsonValue::String(v)) = o.get(version_key) {
+                        versions.push(remove_v_prefix(v).to_string());
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        return Ok(Json(LoadVersionsOutput::from(versions)?));
+    }
+
+    err!("Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`.")
+}
+
+#[plugin_fn]
+pub fn detect_version_files(_: ()) -> FnResult<Json<DetectVersionOutput>> {
+    let mut output = DetectVersionOutput::default();
+    let schema = get_schema()?;
+
+    if let Some(files) = schema.detect.version_files {
+        output.files = files;
+    }
+
+    Ok(Json(output))
 }
 
 fn interpolate_tokens(
@@ -154,108 +217,23 @@ pub fn download_prebuilt(
 }
 
 #[plugin_fn]
-pub fn locate_bins(Json(_): Json<LocateBinsInput>) -> FnResult<Json<LocateBinsOutput>> {
+pub fn locate_executables(
+    Json(_): Json<LocateExecutablesInput>,
+) -> FnResult<Json<LocateExecutablesOutput>> {
     let env = get_proto_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
 
-    Ok(Json(LocateBinsOutput {
-        bin_path: Some(get_bin_path(platform, &env)),
-        fallback_last_globals_dir: true,
+    let mut primary = ExecutableConfig::new(get_bin_path(platform, &env));
+    primary.no_bin = schema.install.no_bin;
+    primary.no_shim = schema.install.no_shim;
+
+    Ok(Json(LocateExecutablesOutput {
         globals_lookup_dirs: schema.globals.lookup_dirs,
         globals_prefix: schema.globals.package_prefix,
+        primary: Some(primary),
+        ..LocateExecutablesOutput::default()
     }))
-}
-
-pub fn remove_v_prefix(value: &str) -> &str {
-    if value.starts_with('v') || value.starts_with('V') {
-        return &value[1..];
-    }
-
-    value
-}
-
-#[plugin_fn]
-pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVersionsOutput>> {
-    let schema = get_schema()?;
-
-    if let Some(repository) = schema.resolve.git_url {
-        let pattern = regex::Regex::new(&schema.resolve.git_tag_pattern)?;
-
-        let tags = load_git_tags(repository)?;
-        let tags = tags
-            .into_iter()
-            .filter_map(|t| {
-                pattern
-                    .captures(&t)
-                    .map(|captures| captures.get(1).unwrap().as_str().to_string())
-            })
-            .collect::<Vec<_>>();
-
-        return Ok(Json(LoadVersionsOutput::from(tags)?));
-    }
-
-    if let Some(endpoint) = schema.resolve.manifest_url {
-        let response: Vec<JsonValue> = fetch_url(endpoint)?;
-        let version_key = &schema.resolve.manifest_version_key;
-        let mut versions = vec![];
-
-        for row in response {
-            match row {
-                JsonValue::String(v) => {
-                    versions.push(remove_v_prefix(&v).to_string());
-                }
-                JsonValue::Object(o) => {
-                    if let Some(JsonValue::String(v)) = o.get(version_key) {
-                        versions.push(remove_v_prefix(v).to_string());
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        return Ok(Json(LoadVersionsOutput::from(versions)?));
-    }
-
-    err!("Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`.")
-}
-
-#[plugin_fn]
-pub fn detect_version_files(_: ()) -> FnResult<Json<DetectVersionOutput>> {
-    let mut output = DetectVersionOutput::default();
-    let schema = get_schema()?;
-
-    if let Some(files) = schema.detect.version_files {
-        output.files = files;
-    }
-
-    Ok(Json(output))
-}
-
-#[plugin_fn]
-pub fn create_shims(Json(_): Json<CreateShimsInput>) -> FnResult<Json<CreateShimsOutput>> {
-    let env = get_proto_environment()?;
-    let schema = get_schema()?;
-    let platform = get_platform(&schema, &env)?;
-    let bin_path = get_bin_path(platform, &env);
-
-    let mut output = CreateShimsOutput {
-        no_primary_global: !schema.shim.global,
-        ..CreateShimsOutput::default()
-    };
-
-    if schema.shim.local {
-        output.local_shims.insert(
-            get_tool_id(),
-            if let Some(parent_bin) = schema.shim.parent_bin {
-                ShimConfig::local_with_parent(bin_path, parent_bin)
-            } else {
-                ShimConfig::local(bin_path)
-            },
-        );
-    }
-
-    Ok(Json(output))
 }
 
 #[plugin_fn]
@@ -296,4 +274,47 @@ pub fn uninstall_global(
     }
 
     Ok(Json(UninstallGlobalOutput::default()))
+}
+
+// DEPRECATED
+// Removed in v0.23!
+
+#[plugin_fn]
+pub fn locate_bins(Json(_): Json<LocateBinsInput>) -> FnResult<Json<LocateBinsOutput>> {
+    let env = get_proto_environment()?;
+    let schema = get_schema()?;
+    let platform = get_platform(&schema, &env)?;
+
+    Ok(Json(LocateBinsOutput {
+        bin_path: Some(get_bin_path(platform, &env).into()),
+        fallback_last_globals_dir: true,
+        globals_lookup_dirs: schema.globals.lookup_dirs,
+        globals_prefix: schema.globals.package_prefix,
+    }))
+}
+
+#[plugin_fn]
+pub fn create_shims(Json(_): Json<CreateShimsInput>) -> FnResult<Json<CreateShimsOutput>> {
+    let env = get_proto_environment()?;
+    let schema = get_schema()?;
+    let platform = get_platform(&schema, &env)?;
+    let bin_path = get_bin_path(platform, &env);
+
+    let mut output = CreateShimsOutput {
+        no_primary_global: !schema.shim.global,
+        ..CreateShimsOutput::default()
+    };
+
+    if schema.shim.local {
+        output.local_shims.insert(
+            get_tool_id(),
+            if let Some(parent_bin) = schema.shim.parent_bin {
+                ShimConfig::local_with_parent(bin_path, parent_bin)
+            } else {
+                ShimConfig::local(bin_path)
+            },
+        );
+    }
+
+    Ok(Json(output))
 }

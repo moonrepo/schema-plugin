@@ -25,6 +25,8 @@ pub struct InstallSchema {
     pub checksum_url_canary: Option<String>,
     pub download_url: String,
     pub download_url_canary: Option<String>,
+    pub no_bin: bool,
+    pub no_shim: bool,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -107,5 +109,7 @@ pub struct Schema {
     pub install: InstallSchema,
     pub globals: GlobalsSchema,
     pub resolve: ResolveSchema,
+
+    #[deprecated]
     pub shim: ShimSchema,
 }
