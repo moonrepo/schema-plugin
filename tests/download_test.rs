@@ -222,13 +222,15 @@ fn locates_linux_bin() {
 
     assert_eq!(
         plugin
-            .locate_bins(LocateBinsInput {
+            .locate_executables(LocateExecutablesInput {
                 context: ToolContext {
                     version: VersionSpec::parse("20.0.0").unwrap(),
                     ..Default::default()
                 },
             })
-            .bin_path,
+            .primary
+            .unwrap()
+            .exe_path,
         Some("lin/moon".into())
     );
 }
@@ -250,13 +252,15 @@ fn locates_macos_bin() {
 
     assert_eq!(
         plugin
-            .locate_bins(LocateBinsInput {
+            .locate_executables(LocateExecutablesInput {
                 context: ToolContext {
                     version: VersionSpec::parse("20.0.0").unwrap(),
                     ..Default::default()
                 },
             })
-            .bin_path,
+            .primary
+            .unwrap()
+            .exe_path,
         Some("mac/moon".into())
     );
 }
@@ -278,13 +282,15 @@ fn locates_windows_bin() {
 
     assert_eq!(
         plugin
-            .locate_bins(LocateBinsInput {
+            .locate_executables(LocateExecutablesInput {
                 context: ToolContext {
                     version: VersionSpec::parse("20.0.0").unwrap(),
                     ..Default::default()
                 },
             })
-            .bin_path,
+            .primary
+            .unwrap()
+            .exe_path,
         Some("win/moon.exe".into())
     );
 }
