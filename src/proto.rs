@@ -38,7 +38,7 @@ fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> String {
     platform
         .bin_path
         .clone()
-        .unwrap_or_else(|| format_bin_name(get_tool_id(), env.os))
+        .unwrap_or_else(|| env.os.get_exe_name(get_tool_id()))
 }
 
 #[plugin_fn]
