@@ -4,7 +4,9 @@
 
 #### 🚀 Updates
 
+- Added `install.no_bin` and `install.no_shim` fields.
 - Updated to support proto v0.22 release.
+- Deprecated undocumented `shim` setting.
 
 #### ⚙️ Internal
 
