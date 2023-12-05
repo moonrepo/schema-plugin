@@ -4,10 +4,10 @@ use starbase_sandbox::{create_empty_sandbox, locate_fixture};
 generate_resolve_versions_tests!(
     "schema-test",
     {
-        "1.0" => "1.0.3",
+        "1.0.3" => "1.0.3",
         "1.4" => "1.4.0",
         "1.5" => "1.5.1",
-        "1" => "1.16.1",
+        "1" => "1.17.4",
     },
     Some(locate_fixture("schemas").join("base.toml"))
 );
