@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.1
+
+#### 🚀 Updates
+
+- Added `resolve.version-pattern` and improved regex handling.
+  - Now supports named captures: `major`, `minor`, `patch`, `pre`, `build`
+  - Will construct the version from the above captures.
+- Deprecated `resolve.git-tag-pattern` (use the above instead).
+
 ## 0.7.0
 
 #### 🚀 Updates

@@ -41,12 +41,13 @@ pub struct GlobalsSchema {
 #[derive(Debug, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct ResolveSchema {
+    pub version_pattern: String,
     // Manifest
     pub manifest_url: Option<String>,
     pub manifest_version_key: String,
     // Tags
     pub git_url: Option<String>,
-    pub git_tag_pattern: String,
+    pub git_tag_pattern: Option<String>,
 }
 
 impl Default for ResolveSchema {
@@ -55,7 +56,8 @@ impl Default for ResolveSchema {
             manifest_url: None,
             manifest_version_key: "version".to_string(),
             git_url: None,
-            git_tag_pattern:
+            git_tag_pattern: None,
+            version_pattern:
                 r"^v?((?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<pre>-[0-9a-zA-Z\.]+)?(?<build>\+[-0-9a-zA-Z\.]+)?)$"
                     .to_string(),
         }

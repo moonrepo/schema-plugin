@@ -104,7 +104,13 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     let schema = get_schema()?;
 
     if let Some(repository) = schema.resolve.git_url {
-        let pattern = regex::Regex::new(&schema.resolve.git_tag_pattern)?;
+        let pattern = regex::Regex::new(
+            schema
+                .resolve
+                .git_tag_pattern
+                .as_ref()
+                .unwrap_or(&schema.resolve.version_pattern),
+        )?;
 
         let tags = load_git_tags(repository)?;
         let tags = tags
@@ -116,18 +122,25 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     }
 
     if let Some(endpoint) = schema.resolve.manifest_url {
-        let response: Vec<JsonValue> = fetch_url(endpoint)?;
+        let pattern = regex::Regex::new(&schema.resolve.version_pattern)?;
         let version_key = &schema.resolve.manifest_version_key;
+        let response: Vec<JsonValue> = fetch_url(endpoint)?;
         let mut versions = vec![];
+
+        let mut push_version = |v: &str| {
+            if let Some(cap) = pattern.captures(v) {
+                versions.push(create_version(cap));
+            }
+        };
 
         for row in response {
             match row {
                 JsonValue::String(v) => {
-                    versions.push(remove_v_prefix(&v).to_string());
+                    push_version(&v);
                 }
                 JsonValue::Object(o) => {
                     if let Some(JsonValue::String(v)) = o.get(version_key) {
-                        versions.push(remove_v_prefix(v).to_string());
+                        push_version(v);
                     }
                 }
                 _ => {}
