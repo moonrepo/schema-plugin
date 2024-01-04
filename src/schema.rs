@@ -56,7 +56,7 @@ impl Default for ResolveSchema {
             manifest_version_key: "version".to_string(),
             git_url: None,
             git_tag_pattern:
-                r"^v?(([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9a-zA-Z\.]+)?(\+[-0-9a-zA-Z\.]+)?)$"
+                r"^v?((?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<pre>-[0-9a-zA-Z\.]+)?(?<build>\+[-0-9a-zA-Z\.]+)?)$"
                     .to_string(),
         }
     }

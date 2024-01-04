@@ -1,6 +1,7 @@
 use crate::schema::{PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
+use regex::Captures;
 use serde_json::Value as JsonValue;
 
 #[host_fn]
@@ -66,6 +67,38 @@ pub fn remove_v_prefix(value: &str) -> &str {
     value
 }
 
+fn create_version(cap: Captures) -> String {
+    // If no named, use entire string (legacy)
+    if cap.name("major").is_none() {
+        return cap.get(1).unwrap().as_str().to_string();
+    }
+
+    // Otherwise piece named parts together
+    let mut version = String::new();
+
+    version.push_str(cap.name("major").map(|c| c.as_str()).unwrap_or("0"));
+    version.push('.');
+    version.push_str(cap.name("minor").map(|c| c.as_str()).unwrap_or("0"));
+    version.push('.');
+    version.push_str(cap.name("patch").map(|c| c.as_str()).unwrap_or("0"));
+
+    if let Some(pre) = cap.name("pre").map(|c| c.as_str()) {
+        if !pre.starts_with('-') {
+            version.push('-');
+        }
+        version.push_str(pre);
+    }
+
+    if let Some(build) = cap.name("build").map(|c| c.as_str()) {
+        if !build.starts_with('+') {
+            version.push('+');
+        }
+        version.push_str(build);
+    }
+
+    version
+}
+
 #[plugin_fn]
 pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVersionsOutput>> {
     let schema = get_schema()?;
@@ -76,11 +109,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
         let tags = load_git_tags(repository)?;
         let tags = tags
             .into_iter()
-            .filter_map(|t| {
-                pattern
-                    .captures(&t)
-                    .map(|captures| captures.get(1).unwrap().as_str().to_string())
-            })
+            .filter_map(|t| pattern.captures(&t).map(create_version))
             .collect::<Vec<_>>();
 
         return Ok(Json(LoadVersionsOutput::from(tags)?));
