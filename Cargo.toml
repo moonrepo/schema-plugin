@@ -1,6 +1,6 @@
 [package]
 name = "schema_plugin"
-version = "0.7.1"
+version = "0.8.0"
 edition = "2021"
 license = "MIT"
 publish = false
@@ -9,16 +9,16 @@ publish = false
 crate-type = ['cdylib']
 
 [dependencies]
-extism-pdk = "0.3.4"
-proto_pdk = { version = "0.12.2" }                                           # , path = "../../proto/crates/pdk" }
+extism-pdk = "1.0.0"
+proto_pdk = { version = "0.13.0", path = "../../proto/crates/pdk" }
 regex = { version = "1.10.2", default-features = false, features = ["std"] }
-serde = "1.0.193"
-serde_json = "1.0.108"
+serde = "1.0.195"
+serde_json = "1.0.111"
 
 [dev-dependencies]
-proto_pdk_test_utils = { version = "0.14.4", features = [
+proto_pdk_test_utils = { version = "0.15.1", features = [
 	"schema",
-] } # , path = "../../proto/crates/pdk-test-utils" }
+], path = "../../proto/crates/pdk-test-utils" }
 starbase_sandbox = "0.1.12"
 tokio = { version = "1.35.1", features = ["full"] }
 

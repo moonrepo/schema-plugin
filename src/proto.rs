@@ -11,7 +11,7 @@ extern "ExtismHost" {
 }
 
 fn get_schema() -> Result<Schema, Error> {
-    let data = config::get("schema").expect("Missing schema!");
+    let data = config::get("schema")?.expect("Missing schema!");
     let schema: Schema = json::from_str(&data)?;
 
     Ok(schema)
@@ -35,11 +35,13 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> String {
-    platform
+fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> Result<String, Error> {
+    let id = get_tool_id()?;
+
+    Ok(platform
         .bin_path
         .clone()
-        .unwrap_or_else(|| env.os.get_exe_name(get_tool_id()))
+        .unwrap_or_else(|| env.os.get_exe_name(id)))
 }
 
 #[plugin_fn]
@@ -266,7 +268,7 @@ pub fn locate_executables(
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
 
-    let mut primary = ExecutableConfig::new(get_bin_path(platform, &env));
+    let mut primary = ExecutableConfig::new(get_bin_path(platform, &env)?);
     primary.no_bin = schema.install.no_bin;
     primary.no_shim = schema.install.no_shim;
 
@@ -290,7 +292,7 @@ pub fn install_global(
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 
-        let result = exec_command!(inherit, get_tool_id(), args);
+        let result = exec_command!(inherit, get_tool_id()?, args);
 
         return Ok(Json(InstallGlobalOutput::from_exec_command(result)));
     }
@@ -310,53 +312,10 @@ pub fn uninstall_global(
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 
-        let result = exec_command!(inherit, get_tool_id(), args);
+        let result = exec_command!(inherit, get_tool_id()?, args);
 
         return Ok(Json(UninstallGlobalOutput::from_exec_command(result)));
     }
 
     Ok(Json(UninstallGlobalOutput::default()))
-}
-
-// DEPRECATED
-// Removed in v0.23!
-
-#[plugin_fn]
-pub fn locate_bins(Json(_): Json<LocateBinsInput>) -> FnResult<Json<LocateBinsOutput>> {
-    let env = get_proto_environment()?;
-    let schema = get_schema()?;
-    let platform = get_platform(&schema, &env)?;
-
-    Ok(Json(LocateBinsOutput {
-        bin_path: Some(get_bin_path(platform, &env).into()),
-        fallback_last_globals_dir: true,
-        globals_lookup_dirs: schema.globals.lookup_dirs,
-        globals_prefix: schema.globals.package_prefix,
-    }))
-}
-
-#[plugin_fn]
-pub fn create_shims(Json(_): Json<CreateShimsInput>) -> FnResult<Json<CreateShimsOutput>> {
-    let env = get_proto_environment()?;
-    let schema = get_schema()?;
-    let platform = get_platform(&schema, &env)?;
-    let bin_path = get_bin_path(platform, &env);
-
-    let mut output = CreateShimsOutput {
-        no_primary_global: !schema.shim.global,
-        ..CreateShimsOutput::default()
-    };
-
-    if schema.shim.local {
-        output.local_shims.insert(
-            get_tool_id(),
-            if let Some(parent_bin) = schema.shim.parent_bin {
-                ShimConfig::local_with_parent(bin_path, parent_bin)
-            } else {
-                ShimConfig::local(bin_path)
-            },
-        );
-    }
-
-    Ok(Json(output))
 }
