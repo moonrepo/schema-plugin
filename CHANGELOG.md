@@ -5,6 +5,7 @@
 #### 🚀 Updates
 
 - Updated to support proto v0.29 release.
+- Added `globals.bin` setting, for customizing the bin used for installs/uninstalls.
 
 ## 0.8.0
 

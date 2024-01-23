@@ -6,7 +6,6 @@ use serde_json::Value as JsonValue;
 
 #[host_fn]
 extern "ExtismHost" {
-    fn host_log(input: Json<HostLogInput>);
     fn exec_command(input: Json<ExecCommandInput>) -> Json<ExecCommandOutput>;
 }
 
@@ -36,7 +35,7 @@ fn get_platform<'schema>(
 }
 
 fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> Result<String, Error> {
-    let id = get_tool_id()?;
+    let id = get_plugin_id()?;
 
     Ok(platform
         .bin_path
@@ -152,7 +151,10 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
         return Ok(Json(LoadVersionsOutput::from(versions)?));
     }
 
-    err!("Unable to resolve versions for {}. Schema either requires a `git_url` or `manifest_url`.")
+    Err(plugin_err!(
+        "Unable to resolve versions for {}. Schema either requires a <property>resolve.git_url</property> or <property>resolve.manifest_url</property>.",
+        schema.name
+    ))
 }
 
 #[plugin_fn]
@@ -287,12 +289,17 @@ pub fn install_global(
     let schema = get_schema()?;
 
     if let Some(install_args) = schema.globals.install_args {
+        let bin = match schema.globals.bin.as_ref() {
+            Some(name) => name.to_owned(),
+            None => get_plugin_id()?,
+        };
+
         let args = install_args
             .into_iter()
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 
-        let result = exec_command!(inherit, get_tool_id()?, args);
+        let result = exec_command!(inherit, bin, args);
 
         return Ok(Json(InstallGlobalOutput::from_exec_command(result)));
     }
@@ -307,12 +314,17 @@ pub fn uninstall_global(
     let schema = get_schema()?;
 
     if let Some(uninstall_args) = schema.globals.uninstall_args {
+        let bin = match schema.globals.bin.as_ref() {
+            Some(name) => name.to_owned(),
+            None => get_plugin_id()?,
+        };
+
         let args = uninstall_args
             .into_iter()
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 
-        let result = exec_command!(inherit, get_tool_id()?, args);
+        let result = exec_command!(inherit, bin, args);
 
         return Ok(Json(UninstallGlobalOutput::from_exec_command(result)));
     }
