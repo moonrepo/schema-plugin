@@ -41,3 +41,17 @@ fn sets_latest_alias() {
     assert!(output.aliases.contains_key("latest"));
     assert_eq!(output.aliases.get("latest"), output.latest.as_ref());
 }
+
+#[test]
+fn version_pattern_supports_common_classes() {
+    let sandbox = create_empty_sandbox();
+    let plugin = create_schema_plugin(
+        "schema-test",
+        sandbox.path(),
+        locate_fixture("schemas").join("version-pattern.toml"),
+    );
+
+    let output = plugin.load_versions(LoadVersionsInput::default());
+
+    assert!(!output.versions.is_empty());
+}
