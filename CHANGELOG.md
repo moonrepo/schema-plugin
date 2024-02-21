@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1
+
+#### 🚀 Updates
+
+- Updated our regex to support Perl syntax like `\d`.
+
 ## 0.9.0
 
 #### 🚀 Updates
