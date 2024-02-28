@@ -1,9 +1,11 @@
+use proto_pdk::HostArch;
 use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct PlatformMapper {
+    pub archs: Vec<HostArch>,
     pub archive_prefix: Option<String>,
     pub bin_path: Option<String>,
     pub checksum_file: Option<String>,
@@ -19,7 +21,7 @@ pub struct DetectSchema {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
-    pub arch: HashMap<String, String>,
+    pub arch: HashMap<HostArch, String>,
     pub checksum_public_key: Option<String>,
     pub checksum_url: Option<String>,
     pub checksum_url_canary: Option<String>,
@@ -48,6 +50,7 @@ pub struct ResolveSchema {
     pub manifest_version_key: String,
     // Tags
     pub git_url: Option<String>,
+    #[deprecated]
     pub git_tag_pattern: Option<String>,
 }
 
@@ -61,24 +64,6 @@ impl Default for ResolveSchema {
             version_pattern:
                 r"^v?((?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<pre>-[0-9a-zA-Z\.]+)?(?<build>\+[-0-9a-zA-Z\.]+)?)$"
                     .to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(default, rename_all = "kebab-case")]
-pub struct ShimSchema {
-    pub local: bool,
-    pub global: bool,
-    pub parent_bin: Option<String>,
-}
-
-impl Default for ShimSchema {
-    fn default() -> Self {
-        ShimSchema {
-            local: false,
-            global: true,
-            parent_bin: None,
         }
     }
 }
@@ -112,7 +97,4 @@ pub struct Schema {
     pub install: InstallSchema,
     pub globals: GlobalsSchema,
     pub resolve: ResolveSchema,
-
-    #[deprecated]
-    pub shim: ShimSchema,
 }

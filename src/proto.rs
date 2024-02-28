@@ -3,6 +3,7 @@ use extism_pdk::*;
 use proto_pdk::*;
 use regex::Captures;
 use serde_json::Value as JsonValue;
+use std::collections::HashMap;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -175,13 +176,18 @@ fn interpolate_tokens(
     schema: &Schema,
     env: &HostEnvironment,
 ) -> String {
-    let arch = env.arch.to_rust_arch();
-    let os = env.os.to_string();
-
     let mut value = value
         .replace("{version}", version)
-        .replace("{arch}", schema.install.arch.get(&arch).unwrap_or(&arch))
-        .replace("{os}", &os);
+        .replace(
+            "{arch}",
+            &schema
+                .install
+                .arch
+                .get(&env.arch)
+                .cloned()
+                .unwrap_or_else(|| env.arch.to_rust_arch()),
+        )
+        .replace("{os}", &env.os.to_string());
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {
@@ -205,6 +211,15 @@ pub fn download_prebuilt(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
+
+    if !platform.archs.is_empty() {
+        check_supported_os_and_arch(
+            &schema.name,
+            &env,
+            HashMap::from_iter([(env.os.clone(), platform.archs.clone())]),
+        )?;
+    }
+
     let version = input.context.version.to_string();
     let is_canary = version == "canary";
 

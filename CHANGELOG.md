@@ -2,8 +2,13 @@
 
 ## 0.10.0
 
+#### 💥 Breaking
+
+- Removed deprecated `shim` setting, use `install` setting instead.
+
 #### 🚀 Updates
 
+- Added an `platform.*.archs` setting, to limit what architectures are supported for that OS.
 - Updated to support proto v0.31 release.
 - Updated dependencies.
 
