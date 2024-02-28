@@ -21,17 +21,16 @@ fn get_platform<'schema>(
     schema: &'schema Schema,
     env: &HostEnvironment,
 ) -> Result<&'schema PlatformMapper, PluginError> {
-    let os = env.os.to_string();
-    let mut platform = schema.platform.get(&os);
+    let mut platform = schema.platform.get(&env.os);
 
     // Fallback to linux for other OSes
     if platform.is_none() && env.os.is_bsd() {
-        platform = schema.platform.get("linux");
+        platform = schema.platform.get(&HostOS::Linux);
     }
 
     platform.ok_or_else(|| PluginError::UnsupportedOS {
         tool: schema.name.clone(),
-        os,
+        os: env.os.to_rust_os(),
     })
 }
 
@@ -168,18 +167,16 @@ fn interpolate_tokens(
     schema: &Schema,
     env: &HostEnvironment,
 ) -> String {
+    let arch = env.arch.to_rust_arch();
+    let os = env.os.to_string();
+
     let mut value = value
         .replace("{version}", version)
         .replace(
             "{arch}",
-            &schema
-                .install
-                .arch
-                .get(&env.arch)
-                .cloned()
-                .unwrap_or_else(|| env.arch.to_rust_arch()),
+            schema.install.arch.get(&env.arch).unwrap_or(&arch),
         )
-        .replace("{os}", &env.os.to_string());
+        .replace("{os}", &os);
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {

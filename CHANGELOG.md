@@ -4,14 +4,17 @@
 
 #### 💥 Breaking
 
-- Renamed `globals` setting to `packages`.
 - Removed deprecated `shim` setting, use `install` setting instead.
 
 #### 🚀 Updates
 
-- Added an `platform.*.archs` setting, to limit what architectures are supported for that OS.
+- Added a `platform.*.archs` setting, to limit what architectures are supported for that OS.
 - Updated to support proto v0.31 release.
 - Updated dependencies.
+
+#### ⚙️ Internal
+
+- Updated arch/os value parsing to be more strict.
 
 ## 0.9.1
 

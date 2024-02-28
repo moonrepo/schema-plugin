@@ -1,4 +1,4 @@
-use proto_pdk::HostArch;
+use proto_pdk::{HostArch, HostOS};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -90,7 +90,7 @@ pub struct Schema {
     #[serde(rename = "type")]
     pub type_of: SchemaType,
     pub metadata: MetadataSchema,
-    pub platform: HashMap<String, PlatformMapper>,
+    pub platform: HashMap<HostOS, PlatformMapper>,
 
     pub detect: DetectSchema,
     pub install: InstallSchema,
