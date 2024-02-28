@@ -61,14 +61,6 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
     }))
 }
 
-pub fn remove_v_prefix(value: &str) -> &str {
-    if value.starts_with('v') || value.starts_with('V') {
-        return &value[1..];
-    }
-
-    value
-}
-
 fn create_version(cap: Captures) -> String {
     // If no named, use entire string (legacy)
     if cap.name("major").is_none() {
@@ -216,7 +208,7 @@ pub fn download_prebuilt(
         check_supported_os_and_arch(
             &schema.name,
             &env,
-            HashMap::from_iter([(env.os.clone(), platform.archs.clone())]),
+            HashMap::from_iter([(env.os, platform.archs.clone())]),
         )?;
     }
 
@@ -284,14 +276,15 @@ pub fn locate_executables(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
+    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
 
     let mut primary = ExecutableConfig::new(get_bin_path(platform, &env)?);
     primary.no_bin = schema.install.no_bin;
     primary.no_shim = schema.install.no_shim;
 
     Ok(Json(LocateExecutablesOutput {
-        globals_lookup_dirs: schema.globals.lookup_dirs,
-        globals_prefix: schema.globals.package_prefix,
+        globals_lookup_dirs: packages.lookup_dirs.clone(),
+        globals_prefix: packages.package_prefix.clone(),
         primary: Some(primary),
         ..LocateExecutablesOutput::default()
     }))
@@ -302,15 +295,16 @@ pub fn install_global(
     Json(input): Json<InstallGlobalInput>,
 ) -> FnResult<Json<InstallGlobalOutput>> {
     let schema = get_schema()?;
+    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
 
-    if let Some(install_args) = schema.globals.install_args {
-        let bin = match schema.globals.bin.as_ref() {
+    if let Some(install_args) = &packages.install_args {
+        let bin = match packages.bin.as_ref() {
             Some(name) => name.to_owned(),
             None => get_plugin_id()?,
         };
 
         let args = install_args
-            .into_iter()
+            .iter()
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 
@@ -327,15 +321,16 @@ pub fn uninstall_global(
     Json(input): Json<UninstallGlobalInput>,
 ) -> FnResult<Json<UninstallGlobalOutput>> {
     let schema = get_schema()?;
+    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
 
-    if let Some(uninstall_args) = schema.globals.uninstall_args {
-        let bin = match schema.globals.bin.as_ref() {
+    if let Some(uninstall_args) = &packages.uninstall_args {
+        let bin = match packages.bin.as_ref() {
             Some(name) => name.to_owned(),
             None => get_plugin_id()?,
         };
 
         let args = uninstall_args
-            .into_iter()
+            .iter()
             .map(|arg| arg.replace("{dependency}", &input.dependency))
             .collect::<Vec<_>>();
 

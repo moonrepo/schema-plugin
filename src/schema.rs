@@ -33,7 +33,7 @@ pub struct InstallSchema {
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
-pub struct GlobalsSchema {
+pub struct PackagesSchema {
     pub bin: Option<String>,
     pub install_args: Option<Vec<String>>,
     pub lookup_dirs: Vec<String>,
@@ -50,7 +50,6 @@ pub struct ResolveSchema {
     pub manifest_version_key: String,
     // Tags
     pub git_url: Option<String>,
-    #[deprecated]
     pub git_tag_pattern: Option<String>,
 }
 
@@ -95,6 +94,9 @@ pub struct Schema {
 
     pub detect: DetectSchema,
     pub install: InstallSchema,
-    pub globals: GlobalsSchema,
+    pub packages: PackagesSchema,
     pub resolve: ResolveSchema,
+
+    #[deprecated]
+    pub globals: Option<PackagesSchema>,
 }

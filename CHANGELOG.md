@@ -4,6 +4,7 @@
 
 #### 💥 Breaking
 
+- Renamed `globals` setting to `packages`.
 - Removed deprecated `shim` setting, use `install` setting instead.
 
 #### 🚀 Updates
