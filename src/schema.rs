@@ -34,11 +34,8 @@ pub struct InstallSchema {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct PackagesSchema {
-    pub bin: Option<String>,
-    pub install_args: Option<Vec<String>>,
-    pub lookup_dirs: Vec<String>,
-    pub package_prefix: Option<String>,
-    pub uninstall_args: Option<Vec<String>>,
+    pub globals_lookup_dirs: Vec<String>,
+    pub globals_prefix: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -96,7 +93,4 @@ pub struct Schema {
     pub install: InstallSchema,
     pub packages: PackagesSchema,
     pub resolve: ResolveSchema,
-
-    #[deprecated]
-    pub globals: Option<PackagesSchema>,
 }

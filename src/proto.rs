@@ -273,68 +273,15 @@ pub fn locate_executables(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
-    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
 
     let mut primary = ExecutableConfig::new(get_bin_path(platform, &env)?);
     primary.no_bin = schema.install.no_bin;
     primary.no_shim = schema.install.no_shim;
 
     Ok(Json(LocateExecutablesOutput {
-        globals_lookup_dirs: packages.lookup_dirs.clone(),
-        globals_prefix: packages.package_prefix.clone(),
+        globals_lookup_dirs: schema.packages.globals_lookup_dirs,
+        globals_prefix: schema.packages.globals_prefix,
         primary: Some(primary),
         ..LocateExecutablesOutput::default()
     }))
-}
-
-#[plugin_fn]
-pub fn install_global(
-    Json(input): Json<InstallGlobalInput>,
-) -> FnResult<Json<InstallGlobalOutput>> {
-    let schema = get_schema()?;
-    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
-
-    if let Some(install_args) = &packages.install_args {
-        let bin = match packages.bin.as_ref() {
-            Some(name) => name.to_owned(),
-            None => get_plugin_id()?,
-        };
-
-        let args = install_args
-            .iter()
-            .map(|arg| arg.replace("{dependency}", &input.dependency))
-            .collect::<Vec<_>>();
-
-        let result = exec_command!(inherit, bin, args);
-
-        return Ok(Json(InstallGlobalOutput::from_exec_command(result)));
-    }
-
-    Ok(Json(InstallGlobalOutput::default()))
-}
-
-#[plugin_fn]
-pub fn uninstall_global(
-    Json(input): Json<UninstallGlobalInput>,
-) -> FnResult<Json<UninstallGlobalOutput>> {
-    let schema = get_schema()?;
-    let packages = schema.globals.as_ref().unwrap_or(&schema.packages);
-
-    if let Some(uninstall_args) = &packages.uninstall_args {
-        let bin = match packages.bin.as_ref() {
-            Some(name) => name.to_owned(),
-            None => get_plugin_id()?,
-        };
-
-        let args = uninstall_args
-            .iter()
-            .map(|arg| arg.replace("{dependency}", &input.dependency))
-            .collect::<Vec<_>>();
-
-        let result = exec_command!(inherit, bin, args);
-
-        return Ok(Json(UninstallGlobalOutput::from_exec_command(result)));
-    }
-
-    Ok(Json(UninstallGlobalOutput::default()))
 }
