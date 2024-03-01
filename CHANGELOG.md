@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.10.0
+
+#### 💥 Breaking
+
+- Removed `globals` setting. Use native installation methods instead.
+- Removed deprecated `shim` setting, use `install` setting instead.
+
+#### 🚀 Updates
+
+- Added a `platform.*.archs` setting, to limit what architectures are supported for that OS.
+- Added a `packages` setting for managing global packages. Supports `globals_lookup_dirs` and `globals_prefix` sub-settings.
+- Updated to support proto v0.31 release.
+- Updated dependencies.
+
+#### ⚙️ Internal
+
+- Updated arch/os value parsing to be more strict.
+
 ## 0.9.1
 
 #### 🚀 Updates

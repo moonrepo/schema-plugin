@@ -3,6 +3,7 @@ use extism_pdk::*;
 use proto_pdk::*;
 use regex::Captures;
 use serde_json::Value as JsonValue;
+use std::collections::HashMap;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -20,17 +21,16 @@ fn get_platform<'schema>(
     schema: &'schema Schema,
     env: &HostEnvironment,
 ) -> Result<&'schema PlatformMapper, PluginError> {
-    let os = env.os.to_string();
-    let mut platform = schema.platform.get(&os);
+    let mut platform = schema.platform.get(&env.os);
 
     // Fallback to linux for other OSes
     if platform.is_none() && env.os.is_bsd() {
-        platform = schema.platform.get("linux");
+        platform = schema.platform.get(&HostOS::Linux);
     }
 
     platform.ok_or_else(|| PluginError::UnsupportedOS {
         tool: schema.name.clone(),
-        os,
+        os: env.os.to_rust_os(),
     })
 }
 
@@ -58,14 +58,6 @@ pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMeta
         self_upgrade_commands: schema.metadata.self_upgrade_commands,
         ..ToolMetadataOutput::default()
     }))
-}
-
-pub fn remove_v_prefix(value: &str) -> &str {
-    if value.starts_with('v') || value.starts_with('V') {
-        return &value[1..];
-    }
-
-    value
 }
 
 fn create_version(cap: Captures) -> String {
@@ -180,7 +172,10 @@ fn interpolate_tokens(
 
     let mut value = value
         .replace("{version}", version)
-        .replace("{arch}", schema.install.arch.get(&arch).unwrap_or(&arch))
+        .replace(
+            "{arch}",
+            schema.install.arch.get(&env.arch).unwrap_or(&arch),
+        )
         .replace("{os}", &os);
 
     // Avoid detecting musl unless requested
@@ -205,6 +200,15 @@ pub fn download_prebuilt(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
+
+    if !platform.archs.is_empty() {
+        check_supported_os_and_arch(
+            &schema.name,
+            &env,
+            HashMap::from_iter([(env.os, platform.archs.clone())]),
+        )?;
+    }
+
     let version = input.context.version.to_string();
     let is_canary = version == "canary";
 
@@ -275,59 +279,9 @@ pub fn locate_executables(
     primary.no_shim = schema.install.no_shim;
 
     Ok(Json(LocateExecutablesOutput {
-        globals_lookup_dirs: schema.globals.lookup_dirs,
-        globals_prefix: schema.globals.package_prefix,
+        globals_lookup_dirs: schema.packages.globals_lookup_dirs,
+        globals_prefix: schema.packages.globals_prefix,
         primary: Some(primary),
         ..LocateExecutablesOutput::default()
     }))
-}
-
-#[plugin_fn]
-pub fn install_global(
-    Json(input): Json<InstallGlobalInput>,
-) -> FnResult<Json<InstallGlobalOutput>> {
-    let schema = get_schema()?;
-
-    if let Some(install_args) = schema.globals.install_args {
-        let bin = match schema.globals.bin.as_ref() {
-            Some(name) => name.to_owned(),
-            None => get_plugin_id()?,
-        };
-
-        let args = install_args
-            .into_iter()
-            .map(|arg| arg.replace("{dependency}", &input.dependency))
-            .collect::<Vec<_>>();
-
-        let result = exec_command!(inherit, bin, args);
-
-        return Ok(Json(InstallGlobalOutput::from_exec_command(result)));
-    }
-
-    Ok(Json(InstallGlobalOutput::default()))
-}
-
-#[plugin_fn]
-pub fn uninstall_global(
-    Json(input): Json<UninstallGlobalInput>,
-) -> FnResult<Json<UninstallGlobalOutput>> {
-    let schema = get_schema()?;
-
-    if let Some(uninstall_args) = schema.globals.uninstall_args {
-        let bin = match schema.globals.bin.as_ref() {
-            Some(name) => name.to_owned(),
-            None => get_plugin_id()?,
-        };
-
-        let args = uninstall_args
-            .into_iter()
-            .map(|arg| arg.replace("{dependency}", &input.dependency))
-            .collect::<Vec<_>>();
-
-        let result = exec_command!(inherit, bin, args);
-
-        return Ok(Json(UninstallGlobalOutput::from_exec_command(result)));
-    }
-
-    Ok(Json(UninstallGlobalOutput::default()))
 }

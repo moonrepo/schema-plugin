@@ -1,9 +1,11 @@
+use proto_pdk::{HostArch, HostOS};
 use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct PlatformMapper {
+    pub archs: Vec<HostArch>,
     pub archive_prefix: Option<String>,
     pub bin_path: Option<String>,
     pub checksum_file: Option<String>,
@@ -19,7 +21,7 @@ pub struct DetectSchema {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
-    pub arch: HashMap<String, String>,
+    pub arch: HashMap<HostArch, String>,
     pub checksum_public_key: Option<String>,
     pub checksum_url: Option<String>,
     pub checksum_url_canary: Option<String>,
@@ -31,12 +33,9 @@ pub struct InstallSchema {
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
-pub struct GlobalsSchema {
-    pub bin: Option<String>,
-    pub install_args: Option<Vec<String>>,
-    pub lookup_dirs: Vec<String>,
-    pub package_prefix: Option<String>,
-    pub uninstall_args: Option<Vec<String>>,
+pub struct PackagesSchema {
+    pub globals_lookup_dirs: Vec<String>,
+    pub globals_prefix: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,24 +64,6 @@ impl Default for ResolveSchema {
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(default, rename_all = "kebab-case")]
-pub struct ShimSchema {
-    pub local: bool,
-    pub global: bool,
-    pub parent_bin: Option<String>,
-}
-
-impl Default for ShimSchema {
-    fn default() -> Self {
-        ShimSchema {
-            local: false,
-            global: true,
-            parent_bin: None,
-        }
-    }
-}
-
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct MetadataSchema {
@@ -106,13 +87,10 @@ pub struct Schema {
     #[serde(rename = "type")]
     pub type_of: SchemaType,
     pub metadata: MetadataSchema,
-    pub platform: HashMap<String, PlatformMapper>,
+    pub platform: HashMap<HostOS, PlatformMapper>,
 
     pub detect: DetectSchema,
     pub install: InstallSchema,
-    pub globals: GlobalsSchema,
+    pub packages: PackagesSchema,
     pub resolve: ResolveSchema,
-
-    #[deprecated]
-    pub shim: ShimSchema,
 }
