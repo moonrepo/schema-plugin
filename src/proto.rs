@@ -1,4 +1,4 @@
-use crate::schema::{PlatformMapper, Schema, SchemaType};
+use crate::schema::{HostLibc, PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
 use regex::Captures;
@@ -180,13 +180,15 @@ fn interpolate_tokens(
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {
+        let libc = if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl(env) {
+            HostLibc::Musl
+        } else {
+            HostLibc::Gnu
+        };
+
         value = value.replace(
             "{libc}",
-            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl(env) {
-                "musl"
-            } else {
-                "gnu"
-            },
+            schema.install.libc.get(&libc).unwrap_or(&libc.to_string()),
         );
     }
 
