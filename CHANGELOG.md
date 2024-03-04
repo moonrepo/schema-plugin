@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+
+#### 🚀 Updates
+
+- Added an `install.libc` setting, to customize the libc wording used.
+
 ## 0.10.0
 
 #### 💥 Breaking

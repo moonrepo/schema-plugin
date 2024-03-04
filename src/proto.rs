@@ -180,15 +180,11 @@ fn interpolate_tokens(
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {
-        let libc = HostLibc::detect(env.os);
+        let libc = env.libc.to_string();
 
         value = value.replace(
             "{libc}",
-            schema
-                .install
-                .libc
-                .get(&libc)
-                .unwrap_or(&format!("{:?}", &libc).to_lowercase()),
+            schema.install.libc.get(&env.libc).unwrap_or(&libc),
         );
     }
 

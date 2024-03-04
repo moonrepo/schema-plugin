@@ -2443,7 +2443,7 @@ dependencies = [
 
 [[package]]
 name = "schema_plugin"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "extism-pdk",
  "proto_pdk",
@@ -2893,9 +2893,9 @@ dependencies = [
 
 [[package]]
 name = "system_env"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c311b8fa5e987b3dab3feb589437079e94fc817157739cd572a789bcbafdfde8"
+checksum = "967511d0f22b9de600ec03e25d9dacc5627f36d69e780d5d0b306903de88b714"
 dependencies = [
  "schematic",
  "serde",
