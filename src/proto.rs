@@ -180,13 +180,15 @@ fn interpolate_tokens(
 
     // Avoid detecting musl unless requested
     if value.contains("{libc}") {
+        let libc = HostLibc::detect(env.os);
+
         value = value.replace(
             "{libc}",
-            if env.os != HostOS::MacOS && env.os != HostOS::Windows && is_musl(env) {
-                "musl"
-            } else {
-                "gnu"
-            },
+            schema
+                .install
+                .libc
+                .get(&libc)
+                .unwrap_or(&format!("{:?}", &libc).to_lowercase()),
         );
     }
 

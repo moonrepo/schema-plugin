@@ -1,4 +1,4 @@
-use proto_pdk::{HostArch, HostOS};
+use proto_pdk::{HostArch, HostLibc, HostOS};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -22,6 +22,7 @@ pub struct DetectSchema {
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
     pub arch: HashMap<HostArch, String>,
+    pub libc: HashMap<HostLibc, String>,
     pub checksum_public_key: Option<String>,
     pub checksum_url: Option<String>,
     pub checksum_url_canary: Option<String>,
