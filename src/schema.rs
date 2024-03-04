@@ -1,6 +1,6 @@
-use proto_pdk::{HostArch, HostOS};
+use proto_pdk::{HostArch, HostLibc, HostOS};
 use serde::Deserialize;
-use std::{collections::HashMap, fmt};
+use std::collections::HashMap;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
@@ -16,19 +16,6 @@ pub struct PlatformMapper {
 #[serde(default, rename_all = "kebab-case")]
 pub struct DetectSchema {
     pub version_files: Option<Vec<String>>,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum HostLibc {
-    Gnu,
-    Musl,
-}
-
-impl fmt::Display for HostLibc {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
 }
 
 #[derive(Debug, Default, Deserialize)]
