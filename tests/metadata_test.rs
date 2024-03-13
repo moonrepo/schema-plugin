@@ -1,14 +1,11 @@
 use proto_pdk_test_utils::*;
-use starbase_sandbox::{create_empty_sandbox, locate_fixture};
+use starbase_sandbox::locate_fixture;
 
 #[test]
 fn registers_metadata() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin(
-        "schema-test",
-        sandbox.path(),
-        locate_fixture("schemas").join("base.toml"),
-    );
+    let sandbox = create_empty_proto_sandbox();
+    let plugin =
+        sandbox.create_schema_plugin("schema-test", locate_fixture("schemas").join("base.toml"));
 
     assert_eq!(
         plugin.register_tool(ToolMetadataInput::default()),

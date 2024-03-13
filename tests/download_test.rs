@@ -1,6 +1,5 @@
 use proto_pdk_test_utils::*;
-use starbase_sandbox::{create_empty_sandbox, locate_fixture};
-use std::collections::HashMap;
+use starbase_sandbox::locate_fixture;
 
 generate_download_install_tests!(
     "schema-test",
@@ -10,12 +9,13 @@ generate_download_install_tests!(
 
 #[test]
 fn supports_linux_arm64() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Linux, HostArch::Arm64)]),
+        |config| {
+            config.host(HostOS::Linux, HostArch::Arm64);
+        },
     );
 
     assert_eq!(
@@ -38,12 +38,13 @@ fn supports_linux_arm64() {
 
 #[test]
 fn supports_linux_x64() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Linux, HostArch::X64)]),
+        |config| {
+            config.host(HostOS::Linux, HostArch::X64);
+        },
     );
 
     assert_eq!(
@@ -66,12 +67,13 @@ fn supports_linux_x64() {
 
 #[test]
 fn supports_macos_arm64() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::MacOS, HostArch::Arm64)]),
+        |config| {
+            config.host(HostOS::MacOS, HostArch::Arm64);
+        },
     );
 
     assert_eq!(
@@ -94,12 +96,13 @@ fn supports_macos_arm64() {
 
 #[test]
 fn supports_macos_x64() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::MacOS, HostArch::X64)]),
+        |config| {
+            config.host(HostOS::MacOS, HostArch::X64);
+        },
     );
 
     assert_eq!(
@@ -122,12 +125,13 @@ fn supports_macos_x64() {
 
 #[test]
 fn supports_windows_arm64() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Windows, HostArch::Arm64)]),
+        |config| {
+            config.host(HostOS::Windows, HostArch::Arm64);
+        },
     );
 
     assert_eq!(
@@ -150,12 +154,13 @@ fn supports_windows_arm64() {
 
 #[test]
 fn supports_windows_x86() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Windows, HostArch::X86)]),
+        |config| {
+            config.host(HostOS::Windows, HostArch::X86);
+        },
     );
 
     assert_eq!(
@@ -178,12 +183,13 @@ fn supports_windows_x86() {
 
 #[test]
 fn locates_linux_bin() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Linux, HostArch::Arm64)]),
+        |config| {
+            config.host(HostOS::Linux, HostArch::Arm64);
+        },
     );
 
     assert_eq!(
@@ -203,12 +209,13 @@ fn locates_linux_bin() {
 
 #[test]
 fn locates_macos_bin() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::MacOS, HostArch::X64)]),
+        |config| {
+            config.host(HostOS::MacOS, HostArch::X64);
+        },
     );
 
     assert_eq!(
@@ -228,12 +235,13 @@ fn locates_macos_bin() {
 
 #[test]
 fn locates_windows_bin() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin_with_config(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin_with_config(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("bins.toml"),
-        HashMap::from_iter([map_config_environment(HostOS::Windows, HostArch::X64)]),
+        |config| {
+            config.host(HostOS::Windows, HostArch::X64);
+        },
     );
 
     assert_eq!(
