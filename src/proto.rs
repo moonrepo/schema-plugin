@@ -4,6 +4,7 @@ use proto_pdk::*;
 use regex::Captures;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -279,6 +280,16 @@ pub fn locate_executables(
     let platform = get_platform(&schema, &env)?;
     let version = input.context.version.to_string();
 
+    // On Windows, automatically add the `.exe` extension to all executables.
+    // But only if there is no extension, so that we don't overwrite `.js` and others!
+    let set_exe_ext = |mut path: PathBuf| -> PathBuf {
+        if env.os.is_windows() && path.extension().is_none() {
+            path.set_extension("exe");
+        }
+
+        path
+    };
+
     // Primary exe
     let mut primary = schema.install.primary.clone().unwrap_or_default();
 
@@ -294,10 +305,23 @@ pub fn locate_executables(
         primary.no_shim = no_shim;
     }
 
+    // Secondary exe's
+    let mut secondary = schema.install.secondary;
+
+    for config in secondary.values_mut() {
+        if let Some(exe_path) = config.exe_path.take() {
+            config.exe_path = Some(set_exe_ext(exe_path));
+        }
+
+        if let Some(exe_link_path) = config.exe_link_path.take() {
+            config.exe_link_path = Some(set_exe_ext(exe_link_path));
+        }
+    }
+
     Ok(Json(LocateExecutablesOutput {
         globals_lookup_dirs: schema.packages.globals_lookup_dirs,
         globals_prefix: schema.packages.globals_prefix,
         primary: Some(primary),
-        ..LocateExecutablesOutput::default()
+        secondary: HashMap::from_iter(secondary),
     }))
 }

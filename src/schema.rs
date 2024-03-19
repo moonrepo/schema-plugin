@@ -33,6 +33,9 @@ pub struct InstallSchema {
     pub primary: Option<ExecutableConfig>,
     pub no_bin: Option<bool>,
     pub no_shim: Option<bool>,
+
+    // Secondary
+    pub secondary: HashMap<String, ExecutableConfig>,
 }
 
 #[derive(Debug, Default, Deserialize)]
