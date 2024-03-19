@@ -1,4 +1,4 @@
-use crate::schema::{PlatformMapper, Schema, SchemaType};
+use crate::schema::{ExecutableSchema, PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
 use regex::Captures;
@@ -12,7 +12,7 @@ extern "ExtismHost" {
 }
 
 fn get_schema() -> Result<Schema, Error> {
-    let data = config::get("schema")?.expect("Missing schema!");
+    let data = config::get("proto_schema")?.expect("Missing schema!");
     let schema: Schema = json::from_str(&data)?;
 
     Ok(schema)
@@ -271,6 +271,19 @@ pub fn download_prebuilt(
     }))
 }
 
+fn create_executable_config(schema: ExecutableSchema) -> ExecutableConfig {
+    ExecutableConfig {
+        exe_path: schema.exe_path,
+        exe_link_path: schema.exe_link_path,
+        no_bin: schema.no_bin,
+        no_shim: schema.no_shim,
+        parent_exe_name: schema.parent_exe_name,
+        shim_before_args: schema.shim_before_args.map(|args| StringOrVec::Vec(args)),
+        shim_after_args: schema.shim_after_args.map(|args| StringOrVec::Vec(args)),
+        shim_env_vars: schema.shim_env_vars.map(|env| HashMap::from_iter(env)),
+    }
+}
+
 #[plugin_fn]
 pub fn locate_executables(
     Json(input): Json<LocateExecutablesInput>,
@@ -282,7 +295,7 @@ pub fn locate_executables(
 
     // On Windows, automatically add the `.exe` extension to all executables.
     // But only if there is no extension, so that we don't overwrite `.js` and others!
-    let set_exe_ext = |mut path: PathBuf| -> PathBuf {
+    let append_exe_ext = |mut path: PathBuf| -> PathBuf {
         if env.os.is_windows() && path.extension().is_none() {
             path.set_extension("exe");
         }
@@ -291,9 +304,16 @@ pub fn locate_executables(
     };
 
     // Primary exe
-    let mut primary = schema.install.primary.clone().unwrap_or_default();
+    let mut primary = schema
+        .install
+        .primary
+        .clone()
+        .map(create_executable_config)
+        .unwrap_or_default();
 
-    if primary.exe_path.is_none() {
+    if let Some(exe_path) = primary.exe_path.take() {
+        primary.exe_path = Some(append_exe_ext(exe_path));
+    } else {
         primary.exe_path = Some(get_platform_exe_path(&schema, &env, platform, &version)?.into());
     }
 
@@ -306,17 +326,19 @@ pub fn locate_executables(
     }
 
     // Secondary exe's
-    let mut secondary = schema.install.secondary;
+    let secondary = schema.install.secondary.into_iter().map(|(key, value)| {
+        let mut config = create_executable_config(value);
 
-    for config in secondary.values_mut() {
         if let Some(exe_path) = config.exe_path.take() {
-            config.exe_path = Some(set_exe_ext(exe_path));
+            config.exe_path = Some(append_exe_ext(exe_path));
         }
 
         if let Some(exe_link_path) = config.exe_link_path.take() {
-            config.exe_link_path = Some(set_exe_ext(exe_link_path));
+            config.exe_link_path = Some(append_exe_ext(exe_link_path));
         }
-    }
+
+        (key, config)
+    });
 
     Ok(Json(LocateExecutablesOutput {
         globals_lookup_dirs: schema.packages.globals_lookup_dirs,

@@ -1,6 +1,7 @@
-use proto_pdk::{ExecutableConfig, HostArch, HostLibc, HostOS};
+use proto_pdk::{HostArch, HostLibc, HostOS};
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
@@ -18,6 +19,21 @@ pub struct DetectSchema {
     pub version_files: Option<Vec<String>>,
 }
 
+// Keep in sync with the `ExecutableConfig` shape!
+// We had to create another struct so that we can serde rename...
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default, rename_all = "kebab-case")]
+pub struct ExecutableSchema {
+    pub exe_path: Option<PathBuf>,
+    pub exe_link_path: Option<PathBuf>,
+    pub no_bin: bool,
+    pub no_shim: bool,
+    pub parent_exe_name: Option<String>,
+    pub shim_before_args: Option<Vec<String>>,
+    pub shim_after_args: Option<Vec<String>>,
+    pub shim_env_vars: Option<HashMap<String, String>>,
+}
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct InstallSchema {
@@ -30,12 +46,12 @@ pub struct InstallSchema {
     pub download_url_canary: Option<String>,
 
     // Primary
-    pub primary: Option<ExecutableConfig>,
+    pub primary: Option<ExecutableSchema>,
     pub no_bin: Option<bool>,
     pub no_shim: Option<bool>,
 
     // Secondary
-    pub secondary: HashMap<String, ExecutableConfig>,
+    pub secondary: HashMap<String, ExecutableSchema>,
 }
 
 #[derive(Debug, Default, Deserialize)]
