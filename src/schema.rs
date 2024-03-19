@@ -1,4 +1,4 @@
-use proto_pdk::{HostArch, HostLibc, HostOS};
+use proto_pdk::{ExecutableConfig, HostArch, HostLibc, HostOS};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -28,8 +28,11 @@ pub struct InstallSchema {
     pub checksum_url_canary: Option<String>,
     pub download_url: String,
     pub download_url_canary: Option<String>,
-    pub no_bin: bool,
-    pub no_shim: bool,
+
+    // Primary
+    pub primary: Option<ExecutableConfig>,
+    pub no_bin: Option<bool>,
+    pub no_shim: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]

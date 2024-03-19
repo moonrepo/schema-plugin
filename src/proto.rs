@@ -34,11 +34,11 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(
-    version: &str,
-    platform: &PlatformMapper,
+fn get_platform_exe_path(
     schema: &Schema,
     env: &HostEnvironment,
+    platform: &PlatformMapper,
+    version: &str,
 ) -> Result<String, Error> {
     let id = get_plugin_id()?;
 
@@ -277,11 +277,22 @@ pub fn locate_executables(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
-
     let version = input.context.version.to_string();
-    let mut primary = ExecutableConfig::new(get_bin_path(&version, platform, &schema, &env)?);
-    primary.no_bin = schema.install.no_bin;
-    primary.no_shim = schema.install.no_shim;
+
+    // Primary exe
+    let mut primary = schema.install.primary.clone().unwrap_or_default();
+
+    if primary.exe_path.is_none() {
+        primary.exe_path = Some(get_platform_exe_path(&schema, &env, platform, &version)?.into());
+    }
+
+    if let Some(no_bin) = schema.install.no_bin {
+        primary.no_bin = no_bin;
+    }
+
+    if let Some(no_shim) = schema.install.no_shim {
+        primary.no_shim = no_shim;
+    }
 
     Ok(Json(LocateExecutablesOutput {
         globals_lookup_dirs: schema.packages.globals_lookup_dirs,
