@@ -1,5 +1,5 @@
 use proto_pdk_test_utils::*;
-use starbase_sandbox::{create_empty_sandbox, locate_fixture};
+use starbase_sandbox::locate_fixture;
 
 generate_resolve_versions_tests!(
     "schema-test",
@@ -13,12 +13,9 @@ generate_resolve_versions_tests!(
 
 #[test]
 fn loads_versions_from_git_tags() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin(
-        "schema-test",
-        sandbox.path(),
-        locate_fixture("schemas").join("base.toml"),
-    );
+    let sandbox = create_empty_proto_sandbox();
+    let plugin =
+        sandbox.create_schema_plugin("schema-test", locate_fixture("schemas").join("base.toml"));
 
     let output = plugin.load_versions(LoadVersionsInput::default());
 
@@ -27,12 +24,9 @@ fn loads_versions_from_git_tags() {
 
 #[test]
 fn sets_latest_alias() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin(
-        "schema-test",
-        sandbox.path(),
-        locate_fixture("schemas").join("base.toml"),
-    );
+    let sandbox = create_empty_proto_sandbox();
+    let plugin =
+        sandbox.create_schema_plugin("schema-test", locate_fixture("schemas").join("base.toml"));
 
     let output = plugin.load_versions(LoadVersionsInput::default());
 
@@ -43,10 +37,9 @@ fn sets_latest_alias() {
 
 #[test]
 fn version_pattern_supports_common_classes() {
-    let sandbox = create_empty_sandbox();
-    let plugin = create_schema_plugin(
+    let sandbox = create_empty_proto_sandbox();
+    let plugin = sandbox.create_schema_plugin(
         "schema-test",
-        sandbox.path(),
         locate_fixture("schemas").join("version-pattern.toml"),
     );
 

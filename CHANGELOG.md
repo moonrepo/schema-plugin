@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0
+
+#### 🚀 Updates
+
+- Added `install.primary` setting, for advanced configuring the primary bin/shim itself. Supports the same settings as the WASM plugin.
+- Added `install.secondary` setting, for configuring secondary bins/shims. Supports the same settings as the WASM plugin.
+- Updated to support proto v0.32 release.
+
 ## 0.10.1
 
 #### 🚀 Updates

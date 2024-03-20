@@ -1,9 +1,10 @@
-use crate::schema::{PlatformMapper, Schema, SchemaType};
+use crate::schema::{ExecutableSchema, PlatformMapper, Schema, SchemaType};
 use extism_pdk::*;
 use proto_pdk::*;
 use regex::Captures;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -11,7 +12,7 @@ extern "ExtismHost" {
 }
 
 fn get_schema() -> Result<Schema, Error> {
-    let data = config::get("schema")?.expect("Missing schema!");
+    let data = config::get("proto_schema")?.expect("Missing schema!");
     let schema: Schema = json::from_str(&data)?;
 
     Ok(schema)
@@ -34,11 +35,11 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(
-    version: &str,
-    platform: &PlatformMapper,
+fn get_platform_exe_path(
     schema: &Schema,
     env: &HostEnvironment,
+    platform: &PlatformMapper,
+    version: &str,
 ) -> Result<String, Error> {
     let id = get_plugin_id()?;
 
@@ -270,6 +271,19 @@ pub fn download_prebuilt(
     }))
 }
 
+fn create_executable_config(schema: ExecutableSchema) -> ExecutableConfig {
+    ExecutableConfig {
+        exe_path: schema.exe_path,
+        exe_link_path: schema.exe_link_path,
+        no_bin: schema.no_bin,
+        no_shim: schema.no_shim,
+        parent_exe_name: schema.parent_exe_name,
+        shim_before_args: schema.shim_before_args.map(StringOrVec::Vec),
+        shim_after_args: schema.shim_after_args.map(StringOrVec::Vec),
+        shim_env_vars: schema.shim_env_vars.map(HashMap::from_iter),
+    }
+}
+
 #[plugin_fn]
 pub fn locate_executables(
     Json(input): Json<LocateExecutablesInput>,
@@ -277,16 +291,59 @@ pub fn locate_executables(
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
-
     let version = input.context.version.to_string();
-    let mut primary = ExecutableConfig::new(get_bin_path(&version, platform, &schema, &env)?);
-    primary.no_bin = schema.install.no_bin;
-    primary.no_shim = schema.install.no_shim;
+
+    // On Windows, automatically add the `.exe` extension to all executables.
+    // But only if there is no extension, so that we don't overwrite `.js` and others!
+    let append_exe_ext = |mut path: PathBuf| -> PathBuf {
+        if env.os.is_windows() && path.extension().is_none() {
+            path.set_extension("exe");
+        }
+
+        path
+    };
+
+    // Primary exe
+    let mut primary = schema
+        .install
+        .primary
+        .clone()
+        .map(create_executable_config)
+        .unwrap_or_default();
+
+    if platform.bin_path.is_none() && primary.exe_path.is_some() {
+        primary.exe_path = Some(append_exe_ext(primary.exe_path.unwrap()));
+    } else {
+        primary.exe_path = Some(get_platform_exe_path(&schema, &env, platform, &version)?.into());
+    }
+
+    if let Some(no_bin) = schema.install.no_bin {
+        primary.no_bin = no_bin;
+    }
+
+    if let Some(no_shim) = schema.install.no_shim {
+        primary.no_shim = no_shim;
+    }
+
+    // Secondary exe's
+    let secondary = schema.install.secondary.into_iter().map(|(key, value)| {
+        let mut config = create_executable_config(value);
+
+        if let Some(exe_path) = config.exe_path.take() {
+            config.exe_path = Some(append_exe_ext(exe_path));
+        }
+
+        if let Some(exe_link_path) = config.exe_link_path.take() {
+            config.exe_link_path = Some(append_exe_ext(exe_link_path));
+        }
+
+        (key, config)
+    });
 
     Ok(Json(LocateExecutablesOutput {
         globals_lookup_dirs: schema.packages.globals_lookup_dirs,
         globals_prefix: schema.packages.globals_prefix,
         primary: Some(primary),
-        ..LocateExecutablesOutput::default()
+        secondary: HashMap::from_iter(secondary),
     }))
 }
