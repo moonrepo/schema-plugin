@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_names)]
+
 use proto_pdk_test_utils::*;
 use starbase_sandbox::locate_fixture;
 use std::collections::HashMap;
@@ -285,7 +287,7 @@ mod primary {
             .unwrap();
 
         assert_eq!(config.exe_path, Some("bin/moon".into()));
-        assert_eq!(config.no_shim, true);
+        assert!(config.no_shim);
         assert_eq!(
             config.shim_before_args,
             Some(StringOrVec::Vec(vec!["-v".into()]))
@@ -375,7 +377,7 @@ mod secondary {
         let bar = secondary.get("bar").unwrap();
 
         assert_eq!(bar.exe_path, Some("bin/bar".into()));
-        assert_eq!(bar.no_bin, true);
+        assert!(bar.no_bin);
         assert_eq!(
             bar.shim_env_vars,
             Some(HashMap::from_iter([("BAR".into(), "bar".into())]))
@@ -385,7 +387,7 @@ mod secondary {
 
         assert_eq!(baz.exe_path, Some("bin/baz".into()));
         assert_eq!(baz.exe_link_path, Some("bin/baz-link".into()));
-        assert_eq!(baz.no_shim, true);
+        assert!(baz.no_shim);
 
         let qux = secondary.get("qux").unwrap();
 
