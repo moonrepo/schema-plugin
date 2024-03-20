@@ -1,5 +1,6 @@
 use proto_pdk_test_utils::*;
 use starbase_sandbox::locate_fixture;
+use std::collections::HashMap;
 
 generate_download_install_tests!(
     "schema-test",
@@ -340,6 +341,93 @@ mod primary {
                 .unwrap()
                 .exe_path,
             Some("lin/moon".into())
+        );
+    }
+}
+
+mod secondary {
+    use super::*;
+
+    #[test]
+    fn sets_secondary_config() {
+        let sandbox = create_empty_proto_sandbox();
+        let plugin = sandbox.create_schema_plugin_with_config(
+            "schema-test",
+            locate_fixture("schemas").join("secondary.toml"),
+            |config| {
+                config.host(HostOS::MacOS, HostArch::X64);
+            },
+        );
+
+        let secondary = plugin
+            .locate_executables(LocateExecutablesInput {
+                context: ToolContext {
+                    version: VersionSpec::parse("20.0.0").unwrap(),
+                    ..Default::default()
+                },
+            })
+            .secondary;
+
+        let foo = secondary.get("foo").unwrap();
+
+        assert_eq!(foo.exe_path, Some("bin/foo".into()));
+
+        let bar = secondary.get("bar").unwrap();
+
+        assert_eq!(bar.exe_path, Some("bin/bar".into()));
+        assert_eq!(bar.no_bin, true);
+        assert_eq!(
+            bar.shim_env_vars,
+            Some(HashMap::from_iter([("BAR".into(), "bar".into())]))
+        );
+
+        let baz = secondary.get("baz").unwrap();
+
+        assert_eq!(baz.exe_path, Some("bin/baz".into()));
+        assert_eq!(baz.exe_link_path, Some("bin/baz-link".into()));
+        assert_eq!(baz.no_shim, true);
+
+        let qux = secondary.get("qux").unwrap();
+
+        assert_eq!(qux.exe_path, Some("bin/qux.js".into()));
+        assert_eq!(qux.parent_exe_name, Some("node".into()));
+    }
+
+    #[test]
+    fn auto_adds_exe_to_bin_on_windows() {
+        let sandbox = create_empty_proto_sandbox();
+        let plugin = sandbox.create_schema_plugin_with_config(
+            "schema-test",
+            locate_fixture("schemas").join("secondary.toml"),
+            |config| {
+                config.host(HostOS::Windows, HostArch::X64);
+            },
+        );
+
+        let secondary = plugin
+            .locate_executables(LocateExecutablesInput {
+                context: ToolContext {
+                    version: VersionSpec::parse("20.0.0").unwrap(),
+                    ..Default::default()
+                },
+            })
+            .secondary;
+
+        assert_eq!(
+            secondary.get("foo").unwrap().exe_path,
+            Some("bin/foo.exe".into())
+        );
+        assert_eq!(
+            secondary.get("bar").unwrap().exe_path,
+            Some("bin/bar.exe".into())
+        );
+        assert_eq!(
+            secondary.get("baz").unwrap().exe_path,
+            Some("bin/baz.exe".into())
+        );
+        assert_eq!(
+            secondary.get("qux").unwrap().exe_path,
+            Some("bin/qux.js".into())
         );
     }
 }
