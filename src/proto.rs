@@ -311,8 +311,8 @@ pub fn locate_executables(
         .map(create_executable_config)
         .unwrap_or_default();
 
-    if let Some(exe_path) = primary.exe_path.take() {
-        primary.exe_path = Some(append_exe_ext(exe_path));
+    if platform.bin_path.is_none() && primary.exe_path.is_some() {
+        primary.exe_path = Some(append_exe_ext(primary.exe_path.unwrap()));
     } else {
         primary.exe_path = Some(get_platform_exe_path(&schema, &env, platform, &version)?.into());
     }

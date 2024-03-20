@@ -11,6 +11,7 @@ download-file = "moon-{arch}-apple-darwin"
 [platform.windows]
 download-file = "moon-{arch}-pc-windows-msvc.exe"
 
-[shim]
-local = true
-parent_bin = "prnt"
+[install.primary]
+exe-path = "bin/moon"
+no-shim = true
+shim-before-args = ["-v"]

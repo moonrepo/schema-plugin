@@ -258,3 +258,88 @@ fn locates_windows_bin() {
         Some("win/moon.exe".into())
     );
 }
+
+mod primary {
+    use super::*;
+
+    #[test]
+    fn sets_primary_config() {
+        let sandbox = create_empty_proto_sandbox();
+        let plugin = sandbox.create_schema_plugin_with_config(
+            "schema-test",
+            locate_fixture("schemas").join("primary.toml"),
+            |config| {
+                config.host(HostOS::MacOS, HostArch::X64);
+            },
+        );
+
+        let config = plugin
+            .locate_executables(LocateExecutablesInput {
+                context: ToolContext {
+                    version: VersionSpec::parse("20.0.0").unwrap(),
+                    ..Default::default()
+                },
+            })
+            .primary
+            .unwrap();
+
+        assert_eq!(config.exe_path, Some("bin/moon".into()));
+        assert_eq!(config.no_shim, true);
+        assert_eq!(
+            config.shim_before_args,
+            Some(StringOrVec::Vec(vec!["-v".into()]))
+        );
+    }
+
+    #[test]
+    fn auto_adds_exe_to_bin_on_windows() {
+        let sandbox = create_empty_proto_sandbox();
+        let plugin = sandbox.create_schema_plugin_with_config(
+            "schema-test",
+            locate_fixture("schemas").join("primary.toml"),
+            |config| {
+                config.host(HostOS::Windows, HostArch::X64);
+            },
+        );
+
+        assert_eq!(
+            plugin
+                .locate_executables(LocateExecutablesInput {
+                    context: ToolContext {
+                        version: VersionSpec::parse("20.0.0").unwrap(),
+                        ..Default::default()
+                    },
+                })
+                .primary
+                .unwrap()
+                .exe_path,
+            Some("bin/moon.exe".into())
+        );
+    }
+
+    #[test]
+    fn primary_path_doesnt_override_platform_path() {
+        let sandbox = create_empty_proto_sandbox();
+        let plugin = sandbox.create_schema_plugin_with_config(
+            "schema-test",
+            locate_fixture("schemas").join("primary-platform.toml"),
+            |config| {
+                config.host(HostOS::Linux, HostArch::X64);
+            },
+        );
+
+        assert_eq!(
+            plugin
+                .locate_executables(LocateExecutablesInput {
+                    context: ToolContext {
+                        version: VersionSpec::parse("20.0.0").unwrap(),
+                        ..Default::default()
+                    },
+                })
+                .primary
+                .unwrap()
+                .exe_path,
+            Some("lin/moon".into())
+        );
+    }
+}
