@@ -34,12 +34,18 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_bin_path(platform: &PlatformMapper, env: &HostEnvironment) -> Result<String, Error> {
+fn get_bin_path(
+    version: &str,
+    platform: &PlatformMapper,
+    schema: &Schema,
+    env: &HostEnvironment,
+) -> Result<String, Error> {
     let id = get_plugin_id()?;
 
     Ok(platform
         .bin_path
         .clone()
+        .map(|s| interpolate_tokens(&s, version, schema, env))
         .unwrap_or_else(|| env.os.get_exe_name(id)))
 }
 
@@ -266,13 +272,14 @@ pub fn download_prebuilt(
 
 #[plugin_fn]
 pub fn locate_executables(
-    Json(_): Json<LocateExecutablesInput>,
+    Json(input): Json<LocateExecutablesInput>,
 ) -> FnResult<Json<LocateExecutablesOutput>> {
     let env = get_host_environment()?;
     let schema = get_schema()?;
     let platform = get_platform(&schema, &env)?;
 
-    let mut primary = ExecutableConfig::new(get_bin_path(platform, &env)?);
+    let version = input.context.version.to_string();
+    let mut primary = ExecutableConfig::new(get_bin_path(&version, platform, &schema, &env)?);
     primary.no_bin = schema.install.no_bin;
     primary.no_shim = schema.install.no_shim;
 
