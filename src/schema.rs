@@ -1,4 +1,4 @@
-use proto_pdk::{HostArch, HostLibc, HostOS};
+use proto_pdk::{HostArch, HostLibc, HostOS, Version};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -64,6 +64,8 @@ pub struct PackagesSchema {
 #[derive(Debug, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct ResolveSchema {
+    pub aliases: HashMap<String, Version>,
+    pub versions: Vec<Version>,
     pub version_pattern: String,
     // Manifest
     pub manifest_url: Option<String>,
@@ -76,10 +78,12 @@ pub struct ResolveSchema {
 impl Default for ResolveSchema {
     fn default() -> Self {
         ResolveSchema {
+            aliases: HashMap::new(),
             manifest_url: None,
             manifest_version_key: "version".to_string(),
             git_url: None,
             git_tag_pattern: None,
+            versions: vec![],
             version_pattern:
                 r"^v?((?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<pre>-[0-9a-zA-Z\.]+)?(?<build>\+[-0-9a-zA-Z\.]+)?)$"
                     .to_string(),
