@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0
+
+#### 🚀 Updates
+
+- Added `resolve.aliases` and `resolve.versions` settings, allowing an explicit list of aliases and versions to be defined. The versions list will be merged with other git/manifest extracted versions.
+- Updated to support proto v0.36 release.
+
 ## 0.12.0
 
 #### 🚀 Updates
