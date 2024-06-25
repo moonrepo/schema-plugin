@@ -76,11 +76,26 @@ fn create_version(cap: Captures) -> String {
     // Otherwise piece named parts together
     let mut version = String::new();
 
-    version.push_str(cap.name("major").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("major")
+            .or_else(|| cap.name("year"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
     version.push('.');
-    version.push_str(cap.name("minor").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("minor")
+            .or_else(|| cap.name("month"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
     version.push('.');
-    version.push_str(cap.name("patch").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("patch")
+            .or_else(|| cap.name("day"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
 
     if let Some(pre) = cap.name("pre").map(|c| c.as_str()) {
         if !pre.starts_with('-') {
