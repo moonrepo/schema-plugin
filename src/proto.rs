@@ -102,7 +102,7 @@ fn create_version(cap: Captures) -> String {
 #[plugin_fn]
 pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVersionsOutput>> {
     let schema = get_schema()?;
-    let mut versions: HashSet<Version> = HashSet::from_iter(schema.resolve.versions);
+    let mut versions: HashSet<VersionSpec> = HashSet::from_iter(schema.resolve.versions);
 
     // Git tags
     if let Some(repository) = schema.resolve.git_url {
@@ -116,7 +116,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
 
         for tag in load_git_tags(repository)? {
             if let Some(cap) = pattern.captures(&tag) {
-                versions.insert(Version::parse(&create_version(cap))?);
+                versions.insert(VersionSpec::parse(&create_version(cap))?);
             }
         }
     }
@@ -124,20 +124,19 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     else if let Some(endpoint) = schema.resolve.manifest_url {
         let pattern = regex::Regex::new(&schema.resolve.version_pattern)?;
         let version_key = &schema.resolve.manifest_version_key;
-
         let response: Vec<JsonValue> = fetch_url(endpoint)?;
 
         for row in response {
             match row {
                 JsonValue::String(v) => {
                     if let Some(cap) = pattern.captures(&v) {
-                        versions.insert(Version::parse(&create_version(cap))?);
+                        versions.insert(VersionSpec::parse(&create_version(cap))?);
                     }
                 }
                 JsonValue::Object(o) => {
                     if let Some(JsonValue::String(v)) = o.get(version_key) {
                         if let Some(cap) = pattern.captures(v) {
-                            versions.insert(Version::parse(&create_version(cap))?);
+                            versions.insert(VersionSpec::parse(&create_version(cap))?);
                         }
                     }
                 }
