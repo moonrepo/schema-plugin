@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.1
+
+#### 🚀 Updates
+
+- Updated `resolve.aliases` to support ranges, requirements, and aliases.
+- Updated `resolve.version-pattern` and `resolve.git-tag-pattern` to support year/month/day regex group names (for calver support).
+- Updated dependencies.
+
 ## 0.13.0
 
 #### 🚀 Updates

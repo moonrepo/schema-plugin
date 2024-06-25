@@ -76,11 +76,26 @@ fn create_version(cap: Captures) -> String {
     // Otherwise piece named parts together
     let mut version = String::new();
 
-    version.push_str(cap.name("major").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("major")
+            .or_else(|| cap.name("year"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
     version.push('.');
-    version.push_str(cap.name("minor").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("minor")
+            .or_else(|| cap.name("month"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
     version.push('.');
-    version.push_str(cap.name("patch").map(|c| c.as_str()).unwrap_or("0"));
+    version.push_str(
+        cap.name("patch")
+            .or_else(|| cap.name("day"))
+            .map(|c| c.as_str())
+            .unwrap_or("0"),
+    );
 
     if let Some(pre) = cap.name("pre").map(|c| c.as_str()) {
         if !pre.starts_with('-') {
@@ -102,7 +117,7 @@ fn create_version(cap: Captures) -> String {
 #[plugin_fn]
 pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVersionsOutput>> {
     let schema = get_schema()?;
-    let mut versions: HashSet<Version> = HashSet::from_iter(schema.resolve.versions);
+    let mut versions: HashSet<VersionSpec> = HashSet::from_iter(schema.resolve.versions);
 
     // Git tags
     if let Some(repository) = schema.resolve.git_url {
@@ -116,7 +131,7 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
 
         for tag in load_git_tags(repository)? {
             if let Some(cap) = pattern.captures(&tag) {
-                versions.insert(Version::parse(&create_version(cap))?);
+                versions.insert(VersionSpec::parse(&create_version(cap))?);
             }
         }
     }
@@ -124,20 +139,19 @@ pub fn load_versions(Json(_): Json<LoadVersionsInput>) -> FnResult<Json<LoadVers
     else if let Some(endpoint) = schema.resolve.manifest_url {
         let pattern = regex::Regex::new(&schema.resolve.version_pattern)?;
         let version_key = &schema.resolve.manifest_version_key;
-
         let response: Vec<JsonValue> = fetch_url(endpoint)?;
 
         for row in response {
             match row {
                 JsonValue::String(v) => {
                     if let Some(cap) = pattern.captures(&v) {
-                        versions.insert(Version::parse(&create_version(cap))?);
+                        versions.insert(VersionSpec::parse(&create_version(cap))?);
                     }
                 }
                 JsonValue::Object(o) => {
                     if let Some(JsonValue::String(v)) = o.get(version_key) {
                         if let Some(cap) = pattern.captures(v) {
-                            versions.insert(Version::parse(&create_version(cap))?);
+                            versions.insert(VersionSpec::parse(&create_version(cap))?);
                         }
                     }
                 }
