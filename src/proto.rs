@@ -35,21 +35,6 @@ fn get_platform<'schema>(
     })
 }
 
-fn get_platform_exe_path(
-    schema: &Schema,
-    env: &HostEnvironment,
-    platform: &PlatformMapper,
-    version: &str,
-) -> Result<String, Error> {
-    let id = get_plugin_id()?;
-
-    Ok(platform
-        .bin_path
-        .clone()
-        .map(|s| interpolate_tokens(&s, version, schema, env))
-        .unwrap_or_else(|| env.os.get_exe_name(id)))
-}
-
 #[plugin_fn]
 pub fn register_tool(Json(_): Json<ToolMetadataInput>) -> FnResult<Json<ToolMetadataOutput>> {
     let schema = get_schema()?;
@@ -328,10 +313,20 @@ pub fn locate_executables(
         .map(create_executable_config)
         .unwrap_or_default();
 
-    if platform.bin_path.is_none() && primary.exe_path.is_some() {
+    #[allow(deprecated)]
+    let exe_path = platform.exe_path.as_ref().or(platform.bin_path.as_ref());
+
+    if exe_path.is_none() && primary.exe_path.is_some() {
         primary.exe_path = Some(append_exe_ext(primary.exe_path.unwrap()));
     } else {
-        primary.exe_path = Some(get_platform_exe_path(&schema, &env, platform, &version)?.into());
+        let id = get_plugin_id()?;
+
+        primary.exe_path = Some(
+            exe_path
+                .map(|s| interpolate_tokens(s, &version, &schema, &env))
+                .unwrap_or_else(|| env.os.get_exe_name(id))
+                .into(),
+        );
     }
 
     if let Some(no_bin) = schema.install.no_bin {
@@ -343,8 +338,8 @@ pub fn locate_executables(
     }
 
     // Secondary exe's
-    let secondary = schema.install.secondary.into_iter().map(|(key, value)| {
-        let mut config = create_executable_config(value);
+    let secondary = schema.install.secondary.iter().map(|(key, value)| {
+        let mut config = create_executable_config(value.to_owned());
 
         if let Some(exe_path) = config.exe_path.take() {
             config.exe_path = Some(append_exe_ext(exe_path));
@@ -354,10 +349,11 @@ pub fn locate_executables(
             config.exe_link_path = Some(append_exe_ext(exe_link_path));
         }
 
-        (key, config)
+        (key.to_string(), config)
     });
 
     Ok(Json(LocateExecutablesOutput {
+        exes_dir: platform.exes_dir.as_ref().map(PathBuf::from),
         globals_lookup_dirs: schema.packages.globals_lookup_dirs,
         globals_prefix: schema.packages.globals_prefix,
         primary: Some(primary),
