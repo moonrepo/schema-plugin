@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0
+
+#### 🚀 Updates
+
+- Added `platform.*.exe_dir`, which points to a relative dir that contains all pre-installed executables.
+- Renamed `platform.*.bin_path` to `exe_path`.
+- Updated to support proto v0.37 release.
+
 ## 0.13.1
 
 #### 🚀 Updates

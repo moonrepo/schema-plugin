@@ -8,9 +8,13 @@ use std::path::PathBuf;
 pub struct PlatformMapper {
     pub archs: Vec<HostArch>,
     pub archive_prefix: Option<String>,
-    pub bin_path: Option<String>,
     pub checksum_file: Option<String>,
     pub download_file: String,
+    pub exes_dir: Option<String>,
+    pub exe_path: Option<String>,
+
+    #[deprecated]
+    pub bin_path: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
