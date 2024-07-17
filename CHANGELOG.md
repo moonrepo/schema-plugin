@@ -1,3 +1,5 @@
+> # Migrated to a new repository: https://github.com/moonrepo/tools
+
 # Changelog
 
 ## 0.14.0
